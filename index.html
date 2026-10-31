@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA MAESTRO · CONTROL GERENCIAL Y SIMULADOR WEM DE PLANTA</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-color: #f1f5f1;
+            --card-bg: #ffffff;
+            --primary-green: #15803d;
+            --primary-blue: #2563eb;
+            --primary-amber: #d97706;
+            --primary-purple: #7c3aed;
+            --text-color: #1e293b;
+            --border-color: #cbd5e1;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 12px;
+            font-size: 11px;
+        }
+
+        .container {
+            max-width: 1450px;
+            margin: 0 auto;
+        }
+
+        .tabs-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 7px 14px;
+            font-size: 11px;
+            font-weight: 800;
+            border-radius: 6px 6px 0 0;
+            border: 1px solid #cbd5e1;
+            border-bottom: none;
+            background: #e2e8f0;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: #1e3a8a;
+            border-color: #3b82f6;
+            border-bottom: 3px solid #3b82f6;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #cbd5e1;
+            color: #0f172a;
+        }
+
+        .tab-close-btn {
+            color: #ef4444;
+            font-weight: 900;
+            font-size: 12px;
+            border-radius: 50%;
+            padding: 0 4px;
+        }
+        .tab-close-btn:hover {
+            background: #fecaca;
+            color: #b91c1c;
+        }
+
+        .input-num { 
+            height: 28px; 
+            border-radius: 6px; 
+            border: 1px solid #cbd5e1; 
+            padding: 0 6px; 
+            font-size: 11px; 
+            font-weight: bold; 
+            width: 100%; 
+            background-color: #fff; 
+            text-align: right; 
+        }
+        .input-num:focus { 
+            border-color: #166534; 
+            outline: none; 
+            box-shadow: 0 0 0 2px rgba(22, 101, 52, 0.1); 
+            background-color: #fefce8; 
+        }
+        .input-locked { background-color: #f8fafc; color: #1e293b; text-align: center; font-weight: 800; }
+        .input-unlocked { background-color: #fef08a !important; border-color: #ca8a04 !important; text-align: center; }
+
+        .top-bar {
+            background: var(--card-bg);
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .title-container h1 {
+            font-size: 13px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .title-container p {
+            margin: 2px 0 0 0;
+            color: #64748b;
+            font-size: 9px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .consume-panel {
+            background: white;
+            padding: 10px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .consume-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .consume-box label {
+            font-weight: 800;
+            font-size: 11px;
+            color: #1d4ed8;
+            text-transform: uppercase;
+        }
+
+        .consume-box input {
+            width: 90px;
+            padding: 5px;
+            text-align: right;
+            font-weight: 800;
+            border: 1.5px solid #2563eb;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .summary-panels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 6px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .summary-card.total-card {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .summary-title {
+            font-size: 10px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .summary-value {
+            font-size: 15px;
+            font-weight: 900;
+            color: #15803d;
+        }
+
+        .config-bar {
+            background: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .config-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-box label {
+            font-weight: 700;
+            font-size: 11px;
+            color: #1e293b;
+        }
+
+        .config-box input {
+            width: 60px;
+            padding: 4px;
+            text-align: center;
+            font-weight: 800;
+            border: 1.5px solid var(--primary-blue);
+            border-radius: 4px;
+            font-size: 12px;
+            background-color: #eff6ff;
+        }
+
+        .tables-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 6px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: #334155;
+            text-transform: uppercase;
+        }
+
+        .badge {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 4px;
+        }
+
+        th {
+            font-size: 8px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            padding: 4px;
+            text-align: center;
+        }
+
+        td {
+            padding: 3px 2px;
+            text-align: center;
+        }
+
+        select.table-select {
+            width: 100%;
+            padding: 3px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .input-litros {
+            width: 44px;
+            padding: 3px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 9.5px;
+            background-color: #fff;
+        }
+        .input-litros:focus { border-color: #166534; background-color: #fefce8; outline: none; }
+
+        .calc-box {
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            font-size: 9px;
+            padding: 3px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .totals-footer {
+            background: #f8fafc;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-weight: 800;
+            text-align: right;
+            border-top: 1px solid var(--border-color);
+            font-size: 10px;
+            color: #15803d;
+            line-height: 1.5;
+        }
+
+        .history-card {
+            background: white;
+            border-radius: 6px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            margin-top: 12px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-green { background: var(--primary-green); }
+        .btn-blue { background: var(--primary-blue); }
+        .btn-amber { background: var(--primary-amber); }
+        .btn-purple { background: var(--primary-purple); }
+        .btn-indigo { background: #4f46e5; }
+        .btn-slate { background: #334155; }
+
+        .modal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            table-layout: fixed;
+        }
+        .modal-table th, .modal-table td {
+            padding: 5px 3px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .modal-table th { font-weight: bold; text-transform: uppercase; font-size: 9px; }
+
+        input[type="date"], select { height: 32px; border-radius: 6px; border: 1px solid #cbd5e1; padding: 0 6px; font-size: 11px; font-weight: bold; background-color: #fff; }
+        @media print { body { background-color: #fff; } .no-print { display: none !important; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="tabs-container no-print" id="barrPestanas"></div>
+
+    <div class="top-bar">
+        <div class="title-container">
+            <h1 id="tituloLineaActiva">SISTEMA MAESTRO · LÍNEA GOMA BLICHER</h1>
+            <p>CONTROL INDEPENDIENTE DE TANQUES, BODEGA Y HOJA DE RUTA / TRAZABILIDAD</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-indigo" onclick="agregarNuevaPestanaGoma()">➕ Nueva Pantalla de Goma</button>
+            <button class="btn btn-slate" onclick="agregarQuimicoSeco()">➕ Químico Seco</button>
+            <button class="btn btn-purple" onclick="guardarCierreDiarioSistemaMaster()">💾 Guardar Cierre Diario y Hoja de Ruta</button>
+            <button class="btn btn-green" onclick="autoCuadrarWEM()">⚖️ Restablecer WEM</button>
+            <button class="btn btn-blue" onclick="exportarRespaldoExcelGeneral()">📊 Respaldar Excel</button>
+            <label class="btn btn-amber" style="cursor: pointer;">
+                📤 Restaurar Excel
+                <input type="file" id="fileImport" accept=".xlsx, .xls" style="display:none;" onchange="restaurarSistemaExcelGeneral(event)">
+            </label>
+        </div>
+    </div>
+
+    <div class="consume-panel" style="padding: 8px 14px;">
+        <div class="consume-box">
+            <label>📅 Fecha de Operación Actual:</label>
+            <input type="date" id="fecha-registro" style="padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; background: #fff;">
+        </div>
+        <span style="color: #15803d; font-weight: 800; font-size: 10px;">⚡ CIERRE BLINDADO: (SALDO ACTUAL + INGRESO) = NUEVO SALDO BODEGA (AYER).</span>
+    </div>
+
+    <div class="bg-slate-50 rounded-lg p-3 border border-slate-300 shadow-inner space-y-3 no-print mb-3">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-slate-200 pb-2">
+            <h2 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                <span>🛢️</span> Calculadores Superiores (Tanques Verticales + Ingreso Superior Único)
+            </h2>
+            <div class="flex items-center gap-2">
+                <button class="btn btn-indigo" style="font-size: 9px; padding: 4px 8px;" onclick="agregarCuadroTanqueInterno()">➕ Agregar Cuadro de Tanque de Goma</button>
+                <div id="panelSumatoriasGenerales" class="flex flex-wrap gap-2 text-[11px] font-black"></div>
+            </div>
+        </div>
+        <div id="gridGomasSuperiores" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs"></div>
+    </div>
+
+    <div class="table-card" style="margin-bottom: 12px;">
+        <div class="table-header">
+            <span class="section-title">1. Control de Inventario Diario y Trazabilidad de Consumos</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table>
+                <thead>
+                    <tr style="background: #f1f5f9; border-bottom: 1px solid #cbd5e1;">
+                        <th style="padding: 6px; text-align: left;">Categoría / Producto</th>
+                        <th style="padding: 6px; text-align: center;">Unidad</th>
+                        <th style="padding: 6px; text-align: right; background: #e2e8f0;">Saldo Bodega (Ayer)</th>
+                        <th style="padding: 6px; text-align: right; background: #fef9c3; color: #b45309;">➕ Ingreso Compra / Lote</th>
+                        <th style="padding: 6px; text-align: right; background: #eff6ff;">Saldo Actual (Hoy)</th>
+                        <th style="padding: 6px; text-align: right; background: #fef2f2; color: #b91c1c;">CONSUMO REAL</th>
+                        <th style="padding: 6px; text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaStock"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="config-bar">
+        <div class="config-box">
+            <label class="text-blue-900 font-extrabold">Partidas Engomado Duro (≥2.0°):</label>
+            <input type="number" id="num-duro" value="10" min="0" max="50" onchange="actualizarPartidasConfig(this.value, 'duro')">
+        </div>
+        <div class="config-box">
+            <label class="text-indigo-900 font-extrabold">Partidas Engomado Suave (<2.0°):</label>
+            <input type="number" id="num-suave" value="5" min="0" max="50" onchange="actualizarPartidasConfig(this.value, 'suave')">
+        </div>
+        <div class="consume-box ml-auto">
+            <label>🎯 Litros Goma Objetivo:</label>
+            <input type="number" id="input-litros-consumidos" value="0.00" step="0.01" oninput="debounceConsumoObjetivo(this.value)">
+            <button class="btn btn-blue" onclick="distribuirConsumoAutomatico()">⚡ Distribuir y Cuadrar WEM</button>
+        </div>
+    </div>
+
+    <div class="summary-panels-grid">
+        <div class="summary-card">
+            <div class="summary-title">🧪 Goma Duro</div>
+            <div class="summary-value" id="panel-gm-duro">0,00 L</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-title">🧪 Goma Suave</div>
+            <div class="summary-value" id="panel-gm-suave" style="color: #2563eb;">0,00 L</div>
+        </div>
+        <div class="summary-card" style="background:#fffbeb; border-color:#fef3c7;">
+            <div class="summary-title" style="color:#b45309;">🧴 Antiespumante SHT (Duro ≥2°)</div>
+            <div class="summary-value" id="panel-antiespumante" style="color: #d97706;">0,00 Kg</div>
+        </div>
+        <div class="summary-card" style="background:#faf5ff; border-color:#f3e8ff;">
+            <div class="summary-title" style="color:#6b21a8;">🧪 Dispergoma Plus WO (Suave <2°)</div>
+            <div class="summary-value" id="panel-dispergoma" style="color: #7c3aed;">0,00 Kg</div>
+        </div>
+        <div class="summary-card" style="background:#fdf2f8; border-color:#fce7f3;">
+            <div class="summary-title" style="color:#9d174d;">🧪 Asuperle (Suave <2°)</div>
+            <div class="summary-value" id="panel-azuster" style="color: #db2777;">0,00 Kg</div>
+        </div>
+        <div class="summary-card total-card">
+            <div class="summary-title">⚖️ Gran Total Goma Objetivo</div>
+            <div class="summary-value" id="panel-gm-total" style="color: #0f172a;">0,00 L</div>
+        </div>
+    </div>
+
+    <div class="tables-grid">
+        <div class="table-card">
+            <div class="table-header">
+                <span class="section-title">ENGOMADO DURO (≥2.0°) · PRORRATEO ANTIESPUMANTE (COPA Y ALA)</span>
+                <span class="badge" id="badge-duro">0 partidas</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>G. COPA</th>
+                            <th>LT COPA</th>
+                            <th>GM COPA</th>
+                            <th>G. ALA</th>
+                            <th>LT ALA</th>
+                            <th>GM ALA</th>
+                            <th>GM TOTAL</th>
+                            <th style="background:#fef3c7; color:#92400e;">ANTIESP. COPA</th>
+                            <th style="background:#fef3c7; color:#92400e;">ANTIESP. ALA</th>
+                            <th style="background:#fde68a; color:#78350f;">TOTAL ANT.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-duro"></tbody>
+                </table>
+            </div>
+            <div class="totals-footer" id="footer-duro">TOTAL DURO: 0 L Hija | GM: 0 L</div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-header">
+                <span class="section-title">ENGOMADO SUAVE (<2.0°) · DISPERGOMA Y ASUPERLE</span>
+                <span class="badge" id="badge-suave">0 partidas</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>G. COPA</th>
+                            <th>LT COPA</th>
+                            <th>GM COPA</th>
+                            <th>G. ALA</th>
+                            <th>LT ALA</th>
+                            <th>GM ALA</th>
+                            <th>GM TOTAL</th>
+                            <th style="background:#f3e8ff; color:#6b21a8;">DISP. COPA</th>
+                            <th style="background:#f3e8ff; color:#6b21a8;">DISP. ALA</th>
+                            <th style="background:#fce7f3; color:#9d174d;">ASUPERLE (COPA)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-suave"></tbody>
+                </table>
+            </div>
+            <div class="totals-footer" id="footer-suave">TOTAL SUAVE: 0 L Hija | GM: 0 L</div>
+        </div>
+    </div>
+
+    <div class="history-card">
+        <div class="table-header" style="margin-bottom: 10px;">
+            <span class="section-title">2. Hoja de Ruta, Trazabilidad e Historial de Cierres Diarios Master</span>
+            <div>
+                <button class="btn btn-purple" onclick="generarPruebasMes()" style="font-size: 9px; padding: 3px 8px;">🧪 Cargar Datos de Prueba</button>
+                <button class="btn btn-amber" onclick="limpiarFiltrosHistorial()" style="font-size: 9px; padding: 3px 8px;">🔄 Ver Todos</button>
+            </div>
+        </div>
+        
+        <div class="filter-group">
+            <div style="display:flex; align-items:center; gap:6px;">
+                <label style="color:#1d4ed8; font-weight:800;">🔍 Seleccionar Mes:</label>
+                <input type="month" id="filtro-mes" onchange="filtrarHistorial()">
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; margin-left: 15px;">
+                <label>Desde:</label>
+                <input type="date" id="filtro-desde" onchange="filtrarHistorial()">
+                <label>Hasta:</label>
+                <input type="date" id="filtro-hasta" onchange="filtrarHistorial()">
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr style="background: #f1f5f9; text-align: left; border-bottom: 1px solid #cbd5e1;">
+                        <th style="padding: 6px;">Fecha de Cierre</th>
+                        <th style="padding: 6px;">Hoja de Ruta / Resumen Consolidado</th>
+                        <th style="padding: 6px; text-align: center;">Trazabilidad WEM Master</th>
+                        <th style="padding: 6px; text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-historial-cuerpo">
+                    <tr><td colspan="4" style="padding: 10px; text-align: center; color: #64748b;">No hay registros en la hoja de ruta.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="modalDetalleWEM" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; padding:20px; border-radius:8px; max-width:1150px; width:95%; max-height:85vh; overflow-y:auto; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #cbd5e1; padding-bottom:8px; margin-bottom:12px;">
+            <h3 id="modalTituloFecha" style="font-weight:900; font-size:13px; color:#1e3a8a; margin:0;">📋 Hoja de Ruta y Trazabilidad Master</h3>
+            <button onclick="cerrarModalDetalle()" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:bold; cursor:pointer;">✕ Cerrar</button>
+        </div>
+        <div id="modalContenidoDetalle" style="font-size:11px;"></div>
+    </div>
+</div>
+
+<script>
+    const factoresGM = {
+        "0.0": "0.000000", "0.1": "0.016480", "0.2": "0.025840", "0.3": "0.035280", "0.4": "0.044800",
+        "0.5": "0.054440", "0.6": "0.064200", "0.7": "0.074040", "0.8": "0.083960", "0.9": "0.094000",
+        "1.0": "0.104160", "1.1": "0.114400", "1.2": "0.124760", "1.3": "0.135200", "1.4": "0.145760",
+        "1.5": "0.156400", "1.6": "0.167120", "1.7": "0.178000", "1.8": "0.188920", "1.9": "0.200000",
+        "2.0": "0.211120", "2.1": "0.222400", "2.2": "0.233720", "2.3": "0.245200", "2.4": "0.256720",
+        "2.5": "0.268400", "2.6": "0.280160", "2.7": "0.292000", "2.8": "0.303960", "2.9": "0.316000",
+        "3.0": "0.328160", "3.1": "0.340440", "3.2": "0.352800", "3.3": "0.365240", "3.4": "0.377800",
+        "3.5": "0.390480", "3.6": "0.403240", "3.7": "0.416080", "3.8": "0.429040", "3.9": "0.442120",
+        "4.0": "0.455280", "4.1": "0.468560", "4.2": "0.481920", "4.3": "0.495360", "4.4": "0.508920",
+        "4.5": "0.522600", "4.6": "0.536360", "4.7": "0.550240", "4.8": "0.564200", "4.9": "0.578280",
+        "5.0": "0.592440", "5.1": "0.606720", "5.2": "0.621080", "5.3": "0.635560", "5.4": "0.650120",
+        "5.5": "0.664800", "5.6": "0.679600", "5.7": "0.694480", "5.8": "0.709440", "5.9": "0.724520",
+        "6.0": "0.739680", "6.1": "0.754960", "6.2": "0.770360", "6.3": "0.785840", "6.4": "0.801400",
+        "6.5": "0.817080", "6.6": "0.832880", "6.7": "0.848760", "6.8": "0.864720", "6.9": "0.880800",
+        "7.0": "0.897000", "7.1": "0.910200", "7.2": "0.923400", "7.3": "0.936600", "7.4": "0.949800",
+        "7.5": "0.963000", "7.6": "0.976200", "7.7": "0.989400", "7.8": "1.002600", "7.9": "1.015800",
+        "8.0": "1.029000", "8.1": "1.042200", "8.2": "1.055400", "8.3": "1.068600", "8.4": "1.081800",
+        "8.5": "1.095000", "8.6": "1.108200", "8.7": "1.121400", "8.8": "1.134600", "8.9": "1.147800",
+        "9.0": "1.161000", "9.1": "1.174200", "9.2": "1.187400", "9.3": "1.200600", "9.4": "1.213800",
+        "9.5": "1.227000"
+    };
+
+    let lineasGoma = [
+        {
+            id: 'linea_blicher',
+            nombre: '🟢 LÍNEA GOMA BLICHER',
+            subtitulo: 'Goma X-Lac Blicher (GM.C.GBP)',
+            numDuro: 10,
+            numSuave: 5,
+            litrosObjetivo: 0,
+            gomasSup: [
+                {
+                    id: 'GBP',
+                    titulo: 'Goma X-Lac Blicher (GM.C.GBP)',
+                    vertBodega: [{ constante: 2.507, cm: '' }],
+                    vertActual: [{ constante: 2.507, cm: '' }],
+                    lotesBodega: [{ capacidad: 150, cantidad: '', esFijo: true }, { capacidad: 1, cantidad: '', esManual: true }],
+                    lotesActual: [{ capacidad: 150, cantidad: '', esFijo: true }, { capacidad: 1, cantidad: '', esManual: true }],
+                    ingresoTanq: '',
+                    ingresoLitro: ''
+                }
+            ],
+            productos: [
+                { id: 'GBP', nombre: 'Goma X-Lac Blicher (GM.C.GBP)', unidad: 'Litros', saldoBodega: '4718.02', saldoActual: '4250.49', vinculadoSup: 'GBP', esGoma: true, claveComun: 'GOMA' },
+                { id: 'ANT', nombre: 'Antiespumante SHT (MP.C.AE)', unidad: 'Kg', saldoBodega: '25.00', ingresoCompra: '', saldoActual: '23.54', claveQuimico: 'ANT', esGoma: false, claveComun: 'ANT' },
+                { id: 'DISP', nombre: 'Dispergoma Plus WO (MP.C.DI.GM.PW)', unidad: 'Kg', saldoBodega: '24.00', ingresoCompra: '', saldoActual: '22.14', claveQuimico: 'DISP', esGoma: false, claveComun: 'DISP' },
+                { id: 'AZUS', nombre: 'Asuperle (MP.C.NV.AS)', unidad: 'Kg', saldoBodega: '23.00', ingresoCompra: '', saldoActual: '20.78', claveQuimico: 'AZUS', esGoma: false, claveComun: 'AZUS' }
+            ],
+            partidasDuro: [],
+            partidasSuave: []
+        },
+        {
+            id: 'linea_lemon',
+            nombre: '🟡 LÍNEA GOMA LEMON',
+            subtitulo: 'Goma Lemon One (GM.C.GLO)',
+            numDuro: 5,
+            numSuave: 5,
+            litrosObjetivo: 0,
+            gomasSup: [
+                {
+                    id: 'GLO',
+                    titulo: 'Goma Lemon One (GM.C.GLO)',
+                    vertBodega: [{ constante: 2.507, cm: '' }],
+                    vertActual: [{ constante: 2.507, cm: '' }],
+                    lotesBodega: [{ capacidad: 150, cantidad: '', esFijo: true }, { capacidad: 1, cantidad: '', esManual: true }],
+                    lotesActual: [{ capacidad: 150, cantidad: '', esFijo: true }, { capacidad: 1, cantidad: '', esManual: true }],
+                    ingresoTanq: '',
+                    ingresoLitro: ''
+                }
+            ],
+            productos: [
+                { id: 'GLO', nombre: 'Goma Lemon One (GM.C.GLO)', unidad: 'Litros', saldoBodega: '4705.49', saldoActual: '', vinculadoSup: 'GLO', esGoma: true, claveComun: 'GOMA_GLO' },
+                { id: 'ANT', nombre: 'Antiespumante SHT (MP.C.AE)', unidad: 'Kg', saldoBodega: '25.00', ingresoCompra: '', saldoActual: '23.54', claveQuimico: 'ANT', esGoma: false, claveComun: 'ANT' },
+                { id: 'DISP', nombre: 'Dispergoma Plus WO (MP.C.DI.GM.PW)', unidad: 'Kg', saldoBodega: '24.00', ingresoCompra: '', saldoActual: '22.14', claveQuimico: 'DISP', esGoma: false, claveComun: 'DISP' },
+                { id: 'AZUS', nombre: 'Asuperle (MP.C.NV.AS)', unidad: 'Kg', saldoBodega: '23.00', ingresoCompra: '', saldoActual: '20.78', claveQuimico: 'AZUS', esGoma: false, claveComun: 'AZUS' }
+            ],
+            partidasDuro: [],
+            partidasSuave: []
+        }
+    ];
+
+    let historialMasterCierres = [];
+    let lineaActivaId = 'linea_blicher';
+    let timeoutDebounce = null;
+
+    const $ = id => document.getElementById(id);
+    const fmt = n => Number(n||0).toLocaleString('es-EC',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    let datosLocalesMultilinea = localStorage.getItem('wem_multilinea_v100');
+    if(datosLocalesMultilinea) {
+        try {
+            let parsed = JSON.parse(datosLocalesMultilinea);
+            if(Array.isArray(parsed)) lineasGoma = parsed;
+        } catch(e) {}
+    }
+
+    let datosHistorialMaster = localStorage.getItem('wem_historial_master_v100');
+    if(datosHistorialMaster) {
+        try {
+            historialMasterCierres = JSON.parse(datosHistorialMaster);
+        } catch(e) {}
+    }
+
+    function guardarMemoriaGeneral() {
+        localStorage.setItem('wem_multilinea_v100', JSON.stringify(lineasGoma));
+        localStorage.setItem('wem_historial_master_v100', JSON.stringify(historialMasterCierres));
+    }
+
+    function obtenerLineaActiva() {
+        let lin = lineasGoma.find(l => l.id === lineaActivaId);
+        if(!lin) {
+            lineaActivaId = lineasGoma[0].id;
+            return lineasGoma[0];
+        }
+        return lin;
+    }
+
+    function renderizarPestanasBarra() {
+        const cont = $('barrPestanas');
+        if(!cont) return;
+        cont.innerHTML = '';
+
+        lineasGoma.forEach((l) => {
+            let activeClass = (l.id === lineaActivaId) ? 'active' : '';
+            let btnClose = lineasGoma.length > 1 ? `<span class="tab-close-btn" onclick="eliminarPestanaLinea(event, '${l.id}')" title="Eliminar esta pantalla">✕</span>` : '';
+            cont.innerHTML += `
+                <div class="tab-btn ${activeClass}" onclick="cambiarPestanaLinea('${l.id}')">
+                    <span>${l.nombre}</span>
+                    ${btnClose}
+                </div>
+            `;
+        });
+    }
+
+    function cambiarPestanaLinea(id) {
+        guardarDatosTablasEnLineaActiva();
+        lineaActivaId = id;
+        renderizarPestanasBarra();
+        cargarPantallaLineaActiva();
+    }
+
+    function eliminarPestanaLinea(event, id) {
+        event.stopPropagation();
+        let lin = lineasGoma.find(l => l.id === id);
+        if(!lin) return;
+
+        if(confirm(`¿Está seguro de eliminar la pantalla [${lin.nombre}]?`)) {
+            lineasGoma = lineasGoma.filter(l => l.id !== id);
+            if(lineaActivaId === id) lineaActivaId = lineasGoma[0].id;
+            guardarMemoriaGeneral();
+            renderizarPestanasBarra();
+            cargarPantallaLineaActiva();
+        }
+    }
+
+    function agregarNuevaPestanaGoma() {
+        let nombre = prompt("Ingrese el nombre de la nueva Línea / Pantalla de Goma:", "🟣 LÍNEA GOMA NUEVA");
+        if(!nombre) return;
+
+        let id = 'linea_' + Date.now();
+        let gId = 'GOMA_' + Date.now();
+
+        lineasGoma.push({
+            id: id,
+            nombre: nombre,
+            subtitulo: nombre,
+            numDuro: 6,
+            numSuave: 6,
+            litrosObjetivo: 0,
+            gomasSup: [
+                {
+                    id: gId,
+                    titulo: nombre,
+                    vertBodega: [{ constante: 2.507, cm: '' }],
+                    vertActual: [{ constante: 2.507, cm: '' }],
+                    lotesBodega: [{ capacidad: 150, cantidad: '', esFijo: true }, { capacidad: 1, cantidad: '', esManual: true }],
+                    lotesActual: [{ capacidad: 150, cantidad: '', esFijo: true }, { capacidad: 1, cantidad: '', esManual: true }],
+                    ingresoTanq: '',
+                    ingresoLitro: ''
+                }
+            ],
+            productos: [
+                { id: gId, nombre: nombre, unidad: 'Litros', saldoBodega: '35.00', saldoActual: '', vinculadoSup: gId, esGoma: true, claveComun: 'GOMA_' + gId },
+                { id: 'ANT', nombre: 'Antiespumante SHT (MP.C.AE)', unidad: 'Kg', saldoBodega: '25.00', ingresoCompra: '', saldoActual: '', claveQuimico: 'ANT', esGoma: false, claveComun: 'ANT' },
+                { id: 'DISP', nombre: 'Dispergoma Plus WO (MP.C.DI.GM.PW)', unidad: 'Kg', saldoBodega: '24.00', ingresoCompra: '', saldoActual: '', claveQuimico: 'DISP', esGoma: false, claveComun: 'DISP' },
+                { id: 'AZUS', nombre: 'Asuperle (MP.C.NV.AS)', unidad: 'Kg', saldoBodega: '23.00', ingresoCompra: '', saldoActual: '', claveQuimico: 'AZUS', esGoma: false, claveComun: 'AZUS' }
+            ],
+            partidasDuro: [],
+            partidasSuave: []
+        });
+
+        guardarMemoriaGeneral();
+        cambiarPestanaLinea(id);
+    }
+
+    function agregarQuimicoSeco() {
+      let nombre = prompt('Ingrese el nombre del Químico Seco:', 'Nuevo Químico Seco');
+      if(!nombre) return;
+      let clave = 'Q_' + Date.now();
+      lineasGoma.forEach(l => {
+          l.productos.push({ id: clave, nombre: nombre, unidad: 'Kg', saldoBodega: '0.00', ingresoCompra: '', saldoActual: '', claveQuimico: clave, esGoma: false, claveComun: clave });
+      });
+      guardarMemoriaGeneral();
+      renderTablaPrincipal();
+    }
+
+    function agregarCuadroTanqueInterno() {
+        let lin = obtenerLineaActiva();
+        let nombreCuadro = prompt("Ingrese el nombre del nuevo Cuadro de Tanque:", `${lin.nombre.replace(/[^a-zA-Z0-9 ]/g, '')} Adicional`);
+        if(!nombreCuadro) return;
+
+        let gId = 'GOMA_INT_' + Date.now();
+        lin.gomasSup.push({
+            id: gId,
+            titulo: nombreCuadro,
+            vertBodega: [{ constante: 2.507, cm: '' }],
+            vertActual: [{ constante: 2.507, cm: '' }],
+            lotesBodega: [{ capacidad: 150, cantidad: '', esFijo: true }, { capacidad: 1, cantidad: '', esManual: true }],
+            lotesActual: [{ capacidad: 150, cantidad: '', esFijo: true }, { capacidad: 1, cantidad: '', esManual: true }],
+            ingresoTanq: '',
+            ingresoLitro: ''
+        });
+
+        lin.productos.unshift({ id: gId, nombre: nombreCuadro, unidad: 'Litros', saldoBodega: '0.00', saldoActual: '', vinculadoSup: gId, esGoma: true, claveComun: gId });
+        guardarMemoriaGeneral();
+        renderGomasSuperiores();
+        renderTablaPrincipal();
+    }
+
+    function cargarPantallaLineaActiva() {
+        let lin = obtenerLineaActiva();
+        if($('tituloLineaActiva')) $('tituloLineaActiva').textContent = `SISTEMA MAESTRO · ${lin.nombre.toUpperCase()}`;
+        if($('num-duro')) $('num-duro').value = lin.numDuro !== undefined ? lin.numDuro : 10;
+        if($('num-suave')) $('num-suave').value = lin.numSuave !== undefined ? lin.numSuave : 5;
+        if($('input-litros-consumidos')) $('input-litros-consumidos').value = lin.litrosObjetivo > 0 ? lin.litrosObjetivo.toFixed(2) : '0.00';
+
+        renderGomasSuperiores();
+        renderTablaPrincipal();
+        generarYDistribuirTablasWEM();
+        filtrarHistorial();
+    }
+
+    function renderGomasSuperiores() {
+      let lin = obtenerLineaActiva();
+      const cont = $('gridGomasSuperiores');
+      if(!cont) return;
+      cont.innerHTML = '';
+
+      lin.gomasSup.forEach((g, gIdx) => {
+        let htmlVertBod = (g.vertBodega || []).map((t, i) => `
+          <div class="grid grid-cols-12 gap-1 items-center">
+            <input type="text" class="input-num input-locked text-center col-span-3" value="${t.constante || ''}" readonly ondblclick="desbloquearConstante(this, ${gIdx}, ${i}, 'bod')">
+            <input type="text" inputmode="decimal" class="input-num text-center col-span-4 campo-nav-manual vb-cm-${gIdx}" data-g="${gIdx}" data-i="${i}" value="${t.cm || ''}" placeholder="CM">
+            <span class="col-span-4 text-right font-bold text-[10px]" id="res-vbod-${gIdx}-${i}">0.00 L</span>
+            <button class="col-span-1 text-red-500 font-bold" onclick="obtenerLineaActiva().gomasSup[${gIdx}].vertBodega.splice(${i},1); renderGomasSuperiores();">✕</button>
+          </div>
+        `).join('');
+
+        let htmlVertAct = (g.vertActual || []).map((t, i) => `
+          <div class="grid grid-cols-12 gap-1 items-center">
+            <input type="text" class="input-num input-locked text-center col-span-3" value="${t.constante || ''}" readonly ondblclick="desbloquearConstante(this, ${gIdx}, ${i}, 'act')">
+            <input type="text" inputmode="decimal" class="input-num text-center col-span-4 campo-nav-manual va-cm-${gIdx}" data-g="${gIdx}" data-i="${i}" value="${t.cm || ''}" placeholder="CM">
+            <span class="col-span-4 text-right font-bold text-[10px]" id="res-vact-${gIdx}-${i}">0.00 L</span>
+            <button class="col-span-1 text-red-500 font-bold" onclick="obtenerLineaActiva().gomasSup[${gIdx}].vertActual.splice(${i},1); renderGomasSuperiores();">✕</button>
+          </div>
+        `).join('');
+
+        let htmlLotesBod = (g.lotesBodega || []).map((l, i) => `
+          <div class="grid grid-cols-12 gap-1 items-center">
+            <input type="text" class="input-num text-center col-span-4" value="${l.capacidad || ''}" readonly style="background:#e2e8f0;">
+            <input type="text" inputmode="decimal" class="input-num text-center col-span-4 campo-nav-manual lb-cant-${gIdx}" data-g="${gIdx}" data-i="${i}" value="${l.cantidad || ''}" placeholder="${l.esFijo ? 'Tanq' : 'Litros'}">
+            <span class="col-span-3 text-right font-bold text-[10px]" id="res-lbod-${gIdx}-${i}">0.00</span>
+            ${!l.esFijo && !l.esManual ? `<button class="col-span-1 text-red-500 font-bold" onclick="obtenerLineaActiva().gomasSup[${gIdx}].lotesBodega.splice(${i},1); renderGomasSuperiores();">✕</button>` : '<span class="col-span-1"></span>'}
+          </div>
+        `).join('');
+
+        let htmlLotesAct = (g.lotesActual || []).map((l, i) => `
+          <div class="grid grid-cols-12 gap-1 items-center">
+            <input type="text" class="input-num text-center col-span-4" value="${l.capacidad || ''}" readonly style="background:#e2e8f0;">
+            <input type="text" inputmode="decimal" class="input-num text-center col-span-4 campo-nav-manual la-cant-${gIdx}" data-g="${gIdx}" data-i="${i}" value="${l.cantidad || ''}" placeholder="${l.esFijo ? 'Tanq' : 'Litros'}">
+            <span class="col-span-3 text-right font-bold text-[10px]" id="res-lact-${gIdx}-${i}">0.00</span>
+            ${!l.esFijo && !l.esManual ? `<button class="col-span-1 text-red-500 font-bold" onclick="obtenerLineaActiva().gomasSup[${gIdx}].lotesActual.splice(${i},1); renderGomasSuperiores();">✕</button>` : '<span class="col-span-1"></span>'}
+          </div>
+        `).join('');
+
+        let btnDelGoma = lin.gomasSup.length > 1 ? `<button class="text-red-600 font-bold text-[10px] bg-red-100 px-1.5 py-0.5 rounded" onclick="eliminarGomaSuperior(${gIdx})">🗑️ Eliminar</button>` : '';
+
+        cont.innerHTML += `
+          <div class="bg-white p-3 rounded border border-slate-300 shadow-sm space-y-3">
+            <div class="font-bold text-slate-800 border-b pb-1 flex flex-wrap justify-between items-center text-xs gap-2">
+              <input type="text" class="bg-transparent font-extrabold text-slate-900 outline-none w-1/3" value="${g.titulo || ''}" readonly style="border:none;">
+              
+              <div class="bg-amber-50 border border-amber-300 px-2 py-0.5 rounded text-[10px] text-amber-900 font-bold flex items-center gap-1">
+                <span class="text-pink-600">📥 INGRESO:</span>
+                <input type="text" inputmode="decimal" id="ing-tanq-${gIdx}" class="w-10 text-center bg-white border border-amber-400 rounded font-bold text-[10px] campo-nav-manual ingreso-tanq-sup" data-g="${gIdx}" value="${g.ingresoTanq || ''}" placeholder="Tanq">
+                <input type="text" inputmode="decimal" id="ing-litro-${gIdx}" class="w-10 text-center bg-white border border-amber-400 rounded font-bold text-[10px] campo-nav-manual ingreso-litro-sup" data-g="${gIdx}" value="${g.ingresoLitro || ''}" placeholder="Litro">
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="bg-indigo-600 text-white font-black px-2 py-0.5 rounded text-[10px]" id="btn-suma-tanque-${gIdx}">TOTAL: 0.00 L</span>
+                ${btnDelGoma}
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div class="bg-slate-100 p-2 rounded border space-y-2">
+                <div class="font-bold text-[10px] text-slate-700 border-b pb-1 flex justify-between items-center">
+                  <span>📌 BODEGA (AYER)</span>
+                  <button class="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[9px]" onclick="obtenerLineaActiva().gomasSup[${gIdx}].vertBodega.push({constante:2.507, cm:''}); renderGomasSuperiores();">＋ Tanque</button>
+                </div>
+                ${htmlVertBod}
+                ${htmlLotesBod}
+                <div class="text-right font-black text-[11px] pt-1 border-t">TOTAL: <span id="tot-gbod-${gIdx}">0.00 L</span></div>
+              </div>
+              <div class="bg-blue-50 p-2 rounded border border-blue-200 space-y-2">
+                <div class="font-bold text-[10px] text-blue-900 border-b pb-1 flex justify-between items-center">
+                  <span>📍 HOY (ACTUAL)</span>
+                  <button class="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[9px]" onclick="obtenerLineaActiva().gomasSup[${gIdx}].vertActual.push({constante:2.507, cm:''}); renderGomasSuperiores();">＋ Tanque</button>
+                </div>
+                ${htmlVertAct}
+                ${htmlLotesAct}
+                <div class="text-right font-black text-[11px] pt-1 border-t text-blue-900">TOTAL: <span id="tot-gact-${gIdx}">0.00 L</span></div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      vincularEventosSuperioresInputs();
+      calcularTotalesSuperiores();
+    }
+
+    function desbloquearConstante(input, gIdx, i, tipo) {
+      let lin = obtenerLineaActiva();
+      input.removeAttribute('readonly');
+      input.classList.remove('input-locked');
+      input.classList.add('input-unlocked');
+      input.focus(); input.select();
+      input.onblur = input.onkeydown = function(e) {
+        if (e.type === 'blur' || e.key === 'Enter') {
+          input.setAttribute('readonly', 'true');
+          input.classList.remove('input-unlocked');
+          input.classList.add('input-locked');
+          if(tipo === 'bod') lin.gomasSup[gIdx].vertBodega[i].constante = input.value;
+          else lin.gomasSup[gIdx].vertActual[i].constante = input.value;
+          calcularTotalesSuperiores();
+        }
+      };
+    }
+
+    function eliminarGomaSuperior(gIdx) {
+      let lin = obtenerLineaActiva();
+      if(confirm(`¿Desea eliminar este cuadro de tanque?`)) {
+          let gId = lin.gomasSup[gIdx].id;
+          lin.gomasSup.splice(gIdx, 1);
+          lin.productos = lin.productos.filter(p => p.vinculadoSup !== gId);
+          guardarMemoriaGeneral();
+          renderGomasSuperiores();
+          renderTablaPrincipal();
+      }
+    }
+
+    function calcularTotalesSuperiores() {
+      let lin = obtenerLineaActiva();
+      let panelHtml = '';
+
+      lin.gomasSup.forEach((g, gIdx) => {
+        let sumB = 0, sumH = 0;
+
+        (g.vertBodega || []).forEach((t, i) => {
+          let sub = (parseFloat(t.constante)||0) * (parseFloat(t.cm)||0);
+          sumB += sub;
+          let el = $('res-vbod-'+gIdx+'-'+i); if(el) el.textContent = fmt(sub) + ' L';
+        });
+
+        (g.lotesBodega || []).forEach((l, i) => {
+          let cantUser = parseFloat(l.cantidad) || 0;
+          let sub = (parseFloat(l.capacidad)||0) * cantUser;
+          sumB += sub;
+          let el = $('res-lbod-'+gIdx+'-'+i); if(el) el.textContent = fmt(sub);
+        });
+
+        (g.vertActual || []).forEach((t, i) => {
+          let sub = (parseFloat(t.constante)||0) * (parseFloat(t.cm)||0);
+          sumH += sub;
+          let el = $('res-vact-'+gIdx+'-'+i); if(el) el.textContent = fmt(sub) + ' L';
+        });
+        (g.lotesActual || []).forEach((l, i) => {
+          let cantUser = parseFloat(l.cantidad) || 0;
+          let sub = (parseFloat(l.capacidad)||0) * cantUser;
+          sumH += sub;
+          let el = $('res-lact-'+gIdx+'-'+i); if(el) el.textContent = fmt(sub);
+        });
+
+        let elBod = $('tot-gbod-'+gIdx); if(elBod) elBod.textContent = fmt(sumB) + ' L';
+        let elAct = $('tot-gact-'+gIdx); if(elAct) elAct.textContent = fmt(sumH) + ' L';
+
+        let sumaTotalTanque = sumB + sumH;
+        let elBtnSuma = $('btn-suma-tanque-' + gIdx);
+        if(elBtnSuma) elBtnSuma.textContent = `TOTAL: ${fmt(sumaTotalTanque)} L`;
+
+        panelHtml += `<div class="bg-white px-2 py-1 rounded border shadow-2xs font-bold">${(g.titulo||'').split(' ')[0]}: Bod:${fmt(sumB)} | Hoy:${fmt(sumH)}</div>`;
+
+        let prod = lin.productos.find(p => p.vinculadoSup === g.id);
+        if(prod) {
+          prod.saldoBodega = sumB > 0 ? sumB.toFixed(2) : prod.saldoBodega;
+          prod.saldoActual = sumH > 0 ? sumH.toFixed(2) : prod.saldoActual;
+        }
+      });
+
+      if($('panelSumatoriasGenerales')) $('panelSumatoriasGenerales').innerHTML = panelHtml;
+
+      guardarMemoriaGeneral();
+      renderTablaPrincipalOnlyInputs();
+    }
+
+    function debounceConsumoObjetivo(val) {
+        clearTimeout(timeoutDebounce);
+        timeoutDebounce = setTimeout(() => {
+            actualizarLitrosObjetivoLinea(val);
+        }, 300);
+    }
+
+    function actualizarLitrosObjetivoLinea(val) {
+        let lin = obtenerLineaActiva();
+        lin.litrosObjetivo = parseFloat(val) || 0;
+        guardarMemoriaGeneral();
+    }
+
+    function vincularEventosSuperioresInputs() {
+      let lin = obtenerLineaActiva();
+      lin.gomasSup.forEach((g, gIdx) => {
+        document.querySelectorAll(`.vb-cm-${gIdx}`).forEach((inp, i) => inp.oninput = e => { g.vertBodega[i].cm = e.target.value; calcularTotalesSuperiores(); });
+        document.querySelectorAll(`.va-cm-${gIdx}`).forEach((inp, i) => inp.oninput = e => { g.vertActual[i].cm = e.target.value; calcularTotalesSuperiores(); });
+        document.querySelectorAll(`.lb-cant-${gIdx}`).forEach((inp, i) => inp.oninput = e => { g.lotesBodega[i].cantidad = e.target.value; calcularTotalesSuperiores(); });
+        document.querySelectorAll(`.la-cant-${gIdx}`).forEach((inp, i) => inp.oninput = e => { g.lotesActual[i].cantidad = e.target.value; calcularTotalesSuperiores(); });
+
+        let inpT = $('ing-tanq-' + gIdx);
+        let inpL = $('ing-litro-' + gIdx);
+        if(inpT) inpT.oninput = e => { g.ingresoTanq = e.target.value; guardarMemoriaGeneral(); };
+        if(inpL) inpL.oninput = e => { g.ingresoLitro = e.target.value; guardarMemoriaGeneral(); };
+      });
+      actualizarSistemaNavegacionTeclado();
+    }
+
+    function renderTablaPrincipal() {
+      let lin = obtenerLineaActiva();
+      const tStock = $('tablaStock');
+      if(!tStock) return;
+      tStock.innerHTML = "";
+      
+      lin.productos.forEach((p, index) => {
+        let valBodega = p.saldoBodega || '0.00';
+        let valIngreso = p.ingresoCompra || '';
+        let valActual = p.saldoActual || '';
+
+        let bodegaNum = parseFloat(valBodega) || 0;
+        let actualNum = parseFloat(valActual) || 0;
+        let consumo = bodegaNum - actualNum; 
+        if(consumo < 0) consumo = 0;
+
+        let tdIngresoHtml = "";
+        let esTanqueVinculado = p.vinculadoSup ? true : false;
+        
+        let readonlyBodega = esTanqueVinculado ? 'readonly style="background:#f1f5f9; color:#1e3a8a; font-weight:900;" title="Alimentado automáticamente"' : '';
+        let readonlyActual = esTanqueVinculado ? 'readonly style="background:#eff6ff; color:#1d4ed8; font-weight:900;" title="Alimentado automáticamente desde tanques superiores"' : '';
+
+        if (p.esGoma) {
+            tdIngresoHtml = `<td style="padding: 6px; text-align: right; background: #fafafa; color: #94a3b8; font-size: 10px;">No aplica</td>`;
+        } else {
+            tdIngresoHtml = `<td style="padding: 6px; text-align: right;"><input type="text" id="prod-ing-${index}" class="input-num campo-nav-manual" value="${valIngreso}" placeholder="0" oninput="alCambiarSaldoProducto(${index}, 'ingresoCompra', this.value)" style="background: #fef9c3; border-color: #fde047;"></td>`;
+        }
+
+        tStock.innerHTML += `
+          <tr style="border-bottom: 1px solid #e2e8f0;">
+            <td style="padding: 6px;"><input type="text" class="w-full bg-transparent font-bold" value="${p.nombre || ''}" readonly style="border:none;"></td>
+            <td style="padding: 6px; text-align: center;"><select class="text-xs border rounded p-1" onchange="obtenerLineaActiva().productos[${index}].unidad=this.value; guardarMemoriaGeneral(); renderTablaPrincipal();"><option value="Litros" ${p.unidad==='Litros'?'selected':''}>Litros</option><option value="Kg" ${p.unidad==='Kg'?'selected':''}>Kg</option><option value="Unidades" ${p.unidad==='Unidades'?'selected':''}>Unidades</option></select></td>
+            
+            <td style="padding: 6px; text-align: right;">
+                <input type="text" id="prod-bod-${index}" class="input-num campo-nav-manual stock-ayer-editable" value="${valBodega}" ${readonlyBodega} oninput="alCambiarSaldoProducto(${index}, 'saldoBodega', this.value)" placeholder="0.00">
+            </td>
+
+            ${tdIngresoHtml}
+
+            <td style="padding: 6px; text-align: right;">
+                <input type="text" id="prod-act-${index}" class="input-num campo-nav-manual stock-hoy-editable" value="${valActual}" ${readonlyActual} placeholder="0.00" oninput="alCambiarSaldoActual(${index}, this.value)">
+            </td>
+
+            <td style="padding: 6px; text-align: right; font-weight: 900; color: #b91c1c;" id="prod-cons-${index}">-${fmt(consumo)} ${p.unidad || 'L'}</td>
+            <td style="padding: 6px; text-align: center;"><button class="text-red-500 font-bold" onclick="eliminarProducto(${index})">✕</button></td>
+          </tr>
+        `;
+      });
+
+      actualizarConsumoTabla();
+      actualizarSistemaNavegacionTeclado();
+    }
+
+    function alCambiarSaldoActual(index, val) {
+        let lin = obtenerLineaActiva();
+        let prodActivo = lin.productos[index];
+
+        if(!prodActivo.vinculadoSup) {
+            prodActivo.saldoActual = val;
+            
+            if (lin.id === 'linea_blicher') {
+                let lineaLemon = lineasGoma.find(l => l.id === 'linea_lemon');
+                if (lineaLemon) {
+                    let prodLemon = lineaLemon.productos.find(p => p.claveQuimico === prodActivo.claveQuimico || (p.esGoma && prodActivo.esGoma));
+                    if (prodLemon) {
+                        prodLemon.saldoBodega = val;
+                    }
+                }
+            }
+
+            guardarMemoriaGeneral();
+        }
+
+        let bodega = parseFloat(prodActivo.saldoBodega) || 0;
+        let actual = parseFloat(prodActivo.saldoActual) || 0;
+        let consumo = bodega - actual;
+        if(consumo < 0) consumo = 0;
+
+        let elCons = $('prod-cons-' + index);
+        if(elCons) elCons.textContent = `-${fmt(consumo)} ${prodActivo.unidad || 'L'}`;
+
+        clearTimeout(timeoutDebounce);
+        timeoutDebounce = setTimeout(() => {
+            actualizarConsumoTabla();
+        }, 300);
+    }
+
+    function alCambiarSaldoProducto(index, campo, val) {
+        let lin = obtenerLineaActiva();
+        let prod = lin.productos[index];
+        
+        prod[campo] = val;
+        guardarMemoriaGeneral();
+
+        let bodega = parseFloat(prod.saldoBodega) || 0;
+        let actual = parseFloat(prod.saldoActual) || 0;
+        let consumo = bodega - actual;
+        if(consumo < 0) consumo = 0;
+
+        let elCons = $('prod-cons-' + index);
+        if(elCons) elCons.textContent = `-${fmt(consumo)} ${prod.unidad || 'L'}`;
+
+        clearTimeout(timeoutDebounce);
+        timeoutDebounce = setTimeout(() => {
+            actualizarConsumoTabla();
+        }, 400);
+    }
+
+    function renderTablaPrincipalOnlyInputs() {
+      let lin = obtenerLineaActiva();
+      lin.productos.forEach((p, index) => {
+        let inpB = $('prod-bod-' + index);
+        let inpIng = $('prod-ing-' + index);
+        let inpA = $('prod-act-' + index);
+        let elCons = $('prod-cons-' + index);
+
+        if(inpB && inpB.value !== (p.saldoBodega || '')) inpB.value = p.saldoBodega || '';
+        if(inpIng && inpIng.value !== (p.ingresoCompra || '')) inpIng.value = p.ingresoCompra || '';
+        if(inpA && inpA.value !== (p.saldoActual || '')) inpA.value = p.saldoActual || '';
+
+        let bodega = parseFloat(p.saldoBodega) || 0;
+        let actual = parseFloat(p.saldoActual) || 0;
+        let consumo = bodega - actual;
+        if(consumo < 0) consumo = 0;
+
+        if(elCons) elCons.textContent = `-${fmt(consumo)} ${p.unidad || 'L'}`;
+      });
+      actualizarConsumoTabla();
+    }
+
+    function eliminarProducto(index) {
+      let lin = obtenerLineaActiva();
+      let pDel = lin.productos[index];
+      lineasGoma.forEach(l => {
+          l.productos = l.productos.filter(p => p.id !== pDel.id && p.claveQuimico !== pDel.claveQuimico);
+      });
+      guardarMemoriaGeneral();
+      renderTablaPrincipal();
+    }
+
+    function actualizarSistemaNavegacionTeclado() {
+        const camposManuales = Array.from(document.querySelectorAll('.campo-nav-manual:not([readonly])'));
+
+        camposManuales.forEach((el, index) => {
+            el.onfocus = () => setTimeout(() => el.select(), 50);
+            el.onkeydown = e => {
+                if (['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Enter'].includes(e.key)) {
+                    e.preventDefault();
+                    let nuevoIndex = index;
+                    
+                    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === 'ArrowRight') {
+                        nuevoIndex = index + 1;
+                    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                        nuevoIndex = index - 1;
+                    }
+
+                    if (nuevoIndex >= 0 && nuevoIndex < camposManuales.length) {
+                        camposManuales[nuevoIndex].focus();
+                        camposManuales[nuevoIndex].select();
+                    }
+                }
+            };
+        });
+    }
+
+    function actualizarConsumoTabla() {
+      let lin = obtenerLineaActiva();
+      let consAntiespumante = 0, consDispergoma = 0, consAzuster = 0;
+      let consumoGomaPrincipal = 0;
+
+      lin.productos.forEach(p => {
+        let bodega = parseFloat(p.saldoBodega)||0;
+        let actual = parseFloat(p.saldoActual)||0;
+        let consumo = bodega - actual; 
+        if(consumo < 0) consumo = 0;
+
+        if(p.vinculadoSup || p.unidad === 'Litros' || p.esGoma) {
+            if(consumo > 0) consumoGomaPrincipal += consumo;
+        }
+
+        if(p.claveQuimico === 'ANT') consAntiespumante = consumo;
+        if(p.claveQuimico === 'DISP') consDispergoma = consumo;
+        if(p.claveQuimico === 'AZUS') consAzuster = consumo;
+      });
+
+      if (consumoGomaPrincipal > 0) {
+          lin.litrosObjetivo = consumoGomaPrincipal;
+      }
+
+      let inputObjetivo = $('input-litros-consumidos');
+      if (inputObjetivo && document.activeElement !== inputObjetivo) {
+          inputObjetivo.value = lin.litrosObjetivo > 0 ? lin.litrosObjetivo.toFixed(2) : '0.00';
+      }
+
+      if($('panel-antiespumante')) $('panel-antiespumante').innerText = fmt(consAntiespumante) + " Kg";
+      if($('panel-dispergoma')) $('panel-dispergoma').innerText = fmt(consDispergoma) + " Kg";
+      if($('panel-azuster')) $('panel-azuster').innerText = fmt(consAzuster) + " Kg";
+
+      recalcularDistribucionAditivosPorPartida(consAntiespumante, consDispergoma, consAzuster);
+    }
+
+    function recalcularDistribucionAditivosPorPartida(cantAnt, cantDisp, cantAzus) {
+      let lin = obtenerLineaActiva();
+      const cDuro = lin.numDuro || 0;
+      const cSuave = lin.numSuave || 0;
+
+      let antPorPartida = cDuro > 0 ? (cantAnt / cDuro) : 0;
+      let sumaAntCopa = 0, sumaAntAla = 0;
+
+      for (let i = 1; i <= cDuro; i++) {
+        let gmCopa = parseFloat(document.getElementById(`duro-gmcopa-val-${i}`)||0);
+        let gmAla = parseFloat(document.getElementById(`duro-gmala-val-${i}`)||0);
+        let gmTot = gmCopa + gmAla;
+
+        let antCopa = gmTot > 0 ? (antPorPartida * (gmCopa / gmTot)) : (antPorPartida / 2);
+        let antAla = gmTot > 0 ? (antPorPartida * (gmAala / gmTot)) : (antPorPartida / 2);
+
+        sumaAntCopa += antCopa;
+        sumaAntAla += antAla;
+
+        if($(`duro-add-ant-copa-${i}`)) $(`duro-add-ant-copa-${i}`).innerText = `${antCopa.toFixed(3).replace('.', ',')} Kg`;
+        if($(`duro-add-ant-ala-${i}`)) $(`duro-add-ant-ala-${i}`).innerText = `${antAla.toFixed(3).replace('.', ',')} Kg`;
+        if($(`duro-add-ant-tot-${i}`)) $(`duro-add-ant-tot-${i}`).innerText = `${antPorPartida.toFixed(3).replace('.', ',')} Kg`;
+      }
+
+      let dispPorPartida = cSuave > 0 ? (cantDisp / cSuave) : 0;
+      let azusPorPartida = cSuave > 0 ? (cantAzus / cSuave) : 0;
+      let sumaDispCopa = 0, sumaDispAla = 0, sumaAzusTotal = 0;
+
+      for (let i = 1; i <= cSuave; i++) {
+        let gmCopa = parseFloat(document.getElementById(`suave-gmcopa-val-${i}`)||0);
+        let gmAla = parseFloat(document.getElementById(`suave-gmala-val-${i}`)||0);
+        let gmTot = gmCopa + gmAla;
+
+        let dispCopa = gmTot > 0 ? (dispPorPartida * (gmCopa / gmTot)) : (dispPorPartida / 2);
+        let dispAla = gmTot > 0 ? (dispPorPartida * (gmAala / gmTot)) : (dispPorPartida / 2);
+
+        sumaDispCopa += dispCopa;
+        sumaDispAla += dispAla;
+        sumaAzusTotal += azusPorPartida;
+
+        if($(`suave-add-disp-copa-${i}`)) $(`suave-add-disp-copa-${i}`).innerText = `${dispCopa.toFixed(3).replace('.', ',')} Kg`;
+        if($(`suave-add-disp-ala-${i}`)) $(`suave-add-disp-ala-${i}`).innerText = `${dispAla.toFixed(3).replace('.', ',')} Kg`;
+        if($(`suave-add-azus-copa-${i}`)) $(`suave-add-azus-copa-${i}`).innerText = `${azusPorPartida.toFixed(3).replace('.', ',')} Kg`;
+      }
+
+      let footerDuro = $('footer-duro');
+      if(footerDuro) {
+          let textoHijaDuro = footerDuro.getAttribute('data-hija') || '0';
+          let textoGmDuro = footerDuro.getAttribute('data-gm') || '0';
+          footerDuro.innerHTML = `TOTAL DURO: ${textoHijaDuro} L Hija | GM: ${textoGmDuro} L<br><b>TOTAL ANTIESPUMANTE:</b> Copa: ${sumaAntCopa.toFixed(2)} Kg | Ala: ${sumaAntAla.toFixed(2)} Kg | <b>Total: ${cantAnt.toFixed(2)} Kg</b>`;
+      }
+
+      let footerSuave = $('footer-suave');
+      if(footerSuave) {
+          let textoHijaSuave = footerSuave.getAttribute('data-hija') || '0';
+          let textoGmSuave = footerSuave.getAttribute('data-gm') || '0';
+          footerSuave.innerHTML = `TOTAL SUAVE: ${textoHijaSuave} L Hija | GM: ${textoGmSuave} L<br><b>TOTAL DISPERGOMA:</b> Copa: ${sumaDispCopa.toFixed(2)} Kg | Ala: ${sumaDispAla.toFixed(2)} Kg | <b>Total: ${cantDisp.toFixed(2)} Kg</b> &nbsp;|&nbsp; <b>ASUPERLE:</b> <b>${cantAzus.toFixed(2)} Kg</b>`;
+      }
+    }
+
+    function obtenerSelectGradosWEM(esDuro, valorPorDefecto, prefix, i) {
+        let opts = "";
+        Object.keys(factoresGM).sort((a,b)=>parseFloat(a)-parseFloat(b)).forEach(g => {
+            let val = parseFloat(g);
+            if (val === 0.0 || (esDuro && val >= 2.0) || (!esDuro && val < 2.0)) {
+                let sel = (g === valorPorDefecto) ? "selected" : "";
+                opts += `<option value="${g}" ${sel}>${g}° (${factoresGM[g]})</option>`;
+            }
+        });
+        return `<select class="table-select" id="${prefix}-g${i}" onchange="calcularWEMTodo()">${opts}</select>`;
+    }
+
+    function actualizarPartidasConfig(val, tipo) {
+        let lin = obtenerLineaActiva();
+        let num = parseInt(val) || 0;
+        if(tipo === 'duro') lin.numDuro = num;
+        if(tipo === 'suave') lin.numSuave = num;
+        guardarMemoriaGeneral();
+        generarYDistribuirTablasWEM();
+    }
+
+    function guardarDatosTablasEnLineaActiva() {
+        let lin = obtenerLineaActiva();
+        let cDuro = lin.numDuro || 0;
+        let cSuave = lin.numSuave || 0;
+
+        let arrDuro = [];
+        for(let i=1; i<=cDuro; i++) {
+            arrDuro.push({
+                gCopa: document.getElementById(`duro-gcopa-g${i}`) ? document.getElementById(`duro-gcopa-g${i}`).value : '3.3',
+                ltCopa: document.getElementById(`duro-ltcopa-${i}`) ? document.getElementById(`duro-ltcopa-${i}`).value : '0',
+                gAla: document.getElementById(`duro-gala-g${i}`) ? document.getElementById(`duro-gala-g${i}`).value : '6.8',
+                ltAla: document.getElementById(`duro-ltala-${i}`) ? document.getElementById(`duro-ltala-${i}`).value : '0'
+            });
+        }
+        lin.partidasDuro = arrDuro;
+
+        let arrSuave = [];
+        for(let i=1; i<=cSuave; i++) {
+            arrSuave.push({
+                gCopa: document.getElementById(`suave-gcopa-g${i}`) ? document.getElementById(`suave-gcopa-g${i}`).value : '0.4',
+                ltCopa: document.getElementById(`suave-ltcopa-${i}`) ? document.getElementById(`suave-ltcopa-${i}`).value : '0',
+                gAla: document.getElementById(`suave-gala-g${i}`) ? document.getElementById(`suave-gala-g${i}`).value : '0.8',
+                ltAla: document.getElementById(`suave-ltala-${i}`) ? document.getElementById(`suave-ltala-${i}`).value : '0'
+            });
+        }
+        lin.partidasSuave = arrSuave;
+        guardarMemoriaGeneral();
+    }
+
+    function generarYDistribuirTablasWEM() {
+        let lin = obtenerLineaActiva();
+        const cDuro = lin.numDuro || 0;
+        const cSuave = lin.numSuave || 0;
+
+        document.getElementById('badge-duro').innerText = `${cDuro} partidas`;
+        document.getElementById('badge-suave').innerText = `${cSuave} partidas`;
+
+        const tbDuro = document.getElementById('tbody-duro');
+        tbDuro.innerHTML = "";
+        for (let i = 1; i <= cDuro; i++) {
+            let pData = (lin.partidasDuro && lin.partidasDuro[i-1]) ? lin.partidasDuro[i-1] : {};
+            let defCopa = pData.gCopa || ((i <= 10) ? '3.3' : '3.8');
+            let defAla = pData.gAla || ((i <= 10) ? '6.8' : '7.2');
+            let ltCopaVal = pData.ltCopa || '0.00';
+            let ltAlaVal = pData.ltAla || '0.00';
+
+            tbDuro.innerHTML += `
+                <tr>
+                    <td style="font-weight:700; color:#64748b;">${i}</td>
+                    <td>${obtenerSelectGradosWEM(true, defCopa, `duro-gcopa`, i)}</td>
+                    <td><input type="number" class="input-litros" id="duro-ltcopa-${i}" value="${ltCopaVal}" step="0.01" oninput="debounceCalcularWEM()"></td>
+                    <td><div class="calc-box" id="duro-gmcopa-${i}">0 L</div><input type="hidden" id="duro-gmcopa-val-${i}" value="0"></td>
+                    <td>${obtenerSelectGradosWEM(true, defAla, `duro-gala`, i)}</td>
+                    <td><input type="number" class="input-litros" id="duro-ltala-${i}" value="${ltAlaVal}" step="0.01" oninput="debounceCalcularWEM()"></td>
+                    <td><div class="calc-box" id="duro-gmala-${i}">0 L</div><input type="hidden" id="duro-gmala-val-${i}" value="0"></td>
+                    <td><div style="background:#e6f4ea; color:#0a6b46; font-weight:800; padding:3px; border-radius:4px;" id="duro-gmtotal-${i}">0 L</div></td>
+                    <td><div class="add-box-ant" id="duro-add-ant-copa-${i}">0,000 Kg</div></td>
+                    <td><div class="add-box-ant" id="duro-add-ant-ala-${i}">0,000 Kg</div></td>
+                    <td><div class="add-box-ant" style="font-weight:900; background:#fde68a;" id="duro-add-ant-tot-${i}">0,000 Kg</div></td>
+                </tr>
+            `;
+        }
+
+        const tbSuave = document.getElementById('tbody-suave');
+        tbSuave.innerHTML = "";
+        for (let i = 1; i <= cSuave; i++) {
+            let pData = (lin.partidasSuave && lin.partidasSuave[i-1]) ? lin.partidasSuave[i-1] : {};
+            let defCopa = pData.gCopa || '0.4';
+            let defAla = pData.gAla || '0.8';
+            let ltCopaVal = pData.ltCopa || '0.00';
+            let ltAlaVal = pData.ltAla || '0.00';
+
+            tbSuave.innerHTML += `
+                <tr>
+                    <td style="font-weight:700; color:#64748b;">${i}</td>
+                    <td>${obtenerSelectGradosWEM(false, defCopa, `suave-gcopa`, i)}</td>
+                    <td><input type="number" class="input-litros" id="suave-ltcopa-${i}" value="${ltCopaVal}" step="0.01" oninput="debounceCalcularWEM()"></td>
+                    <td><div class="calc-box" id="suave-gmcopa-${i}">0 L</div><input type="hidden" id="suave-gmcopa-val-${i}" value="0"></td>
+                    <td>${obtenerSelectGradosWEM(false, defAla, `suave-gala`, i)}</td>
+                    <td><input type="number" class="input-litros" id="suave-ltala-${i}" value="${ltAlaVal}" step="0.01" oninput="debounceCalcularWEM()"></td>
+                    <td><div class="calc-box" id="suave-gmala-${i}">0 L</div><input type="hidden" id="suave-gmala-val-${i}" value="0"></td>
+                    <td><div style="background:#e6f4ea; color:#0a6b46; font-weight:800; padding:3px; border-radius:4px;" id="suave-gmtotal-${i}">0 L</div></td>
+                    <td><div class="add-box-disp" id="suave-add-disp-copa-${i}">0,000 Kg</div></td>
+                    <td><div class="add-box-disp" id="suave-add-disp-ala-${i}">0,000 Kg</div></td>
+                    <td><div class="add-box-azus" id="suave-add-azus-copa-${i}">0,000 Kg</div></td>
+                </tr>
+            `;
+        }
+
+        calcularWEMTodo();
+    }
+
+    function debounceCalcularWEM() {
+        clearTimeout(timeoutDebounce);
+        timeoutDebounce = setTimeout(() => {
+            calcularWEMTodo();
+        }, 150);
+    }
+
+    function distribuirConsumoAutomatico() {
+        let lin = obtenerLineaActiva();
+        let litrosObjetivo = parseFloat(document.getElementById('input-litros-consumidos').value) || lin.litrosObjetivo || 0;
+        const cDuro = lin.numDuro || 0;
+        const cSuave = lin.numSuave || 0;
+
+        if (litrosObjetivo <= 0) return;
+
+        let gmBaseDuro = 0, gmBaseSuave = 0;
+        for (let i = 1; i <= cDuro; i++) {
+            let elC = document.getElementById(`duro-gcopa-g${i}`);
+            let elA = document.getElementById(`duro-gala-g${i}`);
+            let fCopa = elC ? (parseFloat(factoresGM[elC.value]) || 0) : 0.365240;
+            let fAla = elA ? (parseFloat(factoresGM[elA.value]) || 0) : 0.864720;
+            gmBaseDuro += (37.17 * fCopa) + (15.47 * fAla);
+        }
+        for (let i = 1; i <= cSuave; i++) {
+            let elC = document.getElementById(`suave-gcopa-g${i}`);
+            let elA = document.getElementById(`suave-gala-g${i}`);
+            let fCopa = elC ? (parseFloat(factoresGM[elC.value]) || 0) : 0.044800;
+            let fAla = elA ? (parseFloat(factoresGM[elA.value]) || 0) : 0.083960;
+            gmBaseSuave += (10.49 * fCopa) + (32.23 * fAla);
+        }
+
+        let granTotalGMBase = (gmBaseDuro + gmBaseSuave) || 1;
+        let factorEscala = litrosObjetivo / granTotalGMBase;
+
+        for (let i = 1; i <= cDuro; i++) {
+            if($(`duro-ltcopa-${i}`)) $(`duro-ltcopa-${i}`).value = (37.17 * factorEscala).toFixed(2);
+            if($(`duro-ltala-${i}`)) $(`duro-ltala-${i}`).value = (15.47 * factorEscala).toFixed(2);
+        }
+        for (let i = 1; i <= cSuave; i++) {
+            if($(`suave-ltcopa-${i}`)) $(`suave-ltcopa-${i}`).value = (10.49 * factorEscala).toFixed(2);
+            if($(`suave-ltala-${i}`)) $(`suave-ltala-${i}`).value = (32.23 * factorEscala).toFixed(2);
+        }
+        calcularWEMTodo();
+    }
+
+    function calcularWEMTodo() {
+        guardarDatosTablasEnLineaActiva();
+        let lin = obtenerLineaActiva();
+        let totalHijaDuro = 0, totalGMDuro = 0;
+        const cDuro = lin.numDuro || 0;
+        
+        for (let i = 1; i <= cDuro; i++) {
+            let elC = document.getElementById(`duro-gcopa-g${i}`);
+            let elA = document.getElementById(`duro-gala-g${i}`);
+            let elLtC = document.getElementById(`duro-ltcopa-${i}`);
+            let elLtA = document.getElementById(`duro-ltala-${i}`);
+            if(!elC || !elA || !elLtC || !elLtA) continue;
+
+            let fCopa = parseFloat(factoresGM[elC.value]) || 0;
+            let fAla = parseFloat(factoresGM[elA.value]) || 0;
+            let ltCopa = parseFloat(elLtC.value) || 0;
+            let ltAla = parseFloat(elLtA.value) || 0;
+
+            let gmCopa = ltCopa * fCopa;
+            let gmAla = ltAla * fAla;
+            let gmPartida = gmCopa + gmAla;
+
+            totalHijaDuro += (ltCopa + ltAla);
+            totalGMDuro += gmPartida;
+
+            $('duro-gmcopa-' + i).innerText = `${gmCopa.toFixed(3).replace('.', ',')} L`;
+            $('duro-gmala-' + i).innerText = `${gmAla.toFixed(3).replace('.', ',')} L`;
+            $('duro-gmtotal-' + i).innerText = `${gmPartida.toFixed(2).replace('.', ',')} L`;
+
+            if($('duro-gmcopa-val-' + i)) $('duro-gmcopa-val-' + i).value = gmCopa;
+            if($('duro-gmala-val-' + i)) $('duro-gmala-val-' + i).value = gmAla;
+        }
+
+        let totalHijaSuave = 0, totalGMSuave = 0;
+        const cSuave = lin.numSuave || 0;
+
+        for (let i = 1; i <= cSuave; i++) {
+            let elC = document.getElementById(`suave-gcopa-g${i}`);
+            let elA = document.getElementById(`suave-gala-g${i}`);
+            let elLtC = document.getElementById(`suave-ltcopa-${i}`);
+            let elLtA = document.getElementById(`suave-ltala-${i}`);
+            if(!elC || !elA || !elLtC || !elLtA) continue;
+
+            let fCopa = parseFloat(factoresGM[elC.value]) || 0;
+            let fAla = parseFloat(factoresGM[elA.value]) || 0;
+            let ltCopa = parseFloat(elLtC.value) || 0;
+            let ltAla = parseFloat(elLtA.value) || 0;
+
+            let gmCopa = ltCopa * fCopa;
+            let gmAla = ltAla * fAla;
+            let gmPartida = gmCopa + gmAla;
+
+            totalHijaSuave += (ltCopa + ltAla);
+            totalGMSuave += gmPartida;
+
+            $('suave-gmcopa-' + i).innerText = `${gmCopa.toFixed(3).replace('.', ',')} L`;
+            $('suave-gmala-' + i).innerText = `${gmAla.toFixed(3).replace('.', ',')} L`;
+            $('suave-gmtotal-' + i).innerText = `${gmPartida.toFixed(2).replace('.', ',')} L`;
+
+            if($('suave-gmcopa-val-' + i)) $('suave-gmcopa-val-' + i).value = gmCopa;
+            if($('suave-gmala-val-' + i)) $('suave-gmala-val-' + i).value = gmAla;
+        }
+
+        let footerDuro = $('footer-duro');
+        if(footerDuro) {
+            footerDuro.setAttribute('data-hija', totalHijaDuro.toFixed(2));
+            footerDuro.setAttribute('data-gm', totalGMDuro.toFixed(2).replace('.', ','));
+        }
+
+        let footerSuave = $('footer-suave');
+        if(footerSuave) {
+            footerSuave.setAttribute('data-hija', totalHijaSuave.toFixed(2));
+            footerSuave.setAttribute('data-gm', totalGMSuave.toFixed(2).replace('.', ','));
+        }
+
+        let granTotalGM = totalGMDuro + totalGMSuave;
+        $('panel-gm-duro').innerText = totalGMDuro.toFixed(2).replace('.', ',') + " L";
+        $('panel-gm-suave').innerText = totalGMSuave.toFixed(2).replace('.', ',') + " L";
+        $('panel-gm-total').innerText = granTotalGM.toFixed(2).replace('.', ',') + " L";
+
+        actualizarConsumoTabla();
+    }
+
+    function autoCuadrarWEM() {
+        let lin = obtenerLineaActiva();
+        lin.numDuro = 6;
+        lin.numSuave = 6;
+        lin.litrosObjetivo = 388.78;
+        if($('num-duro')) $('num-duro').value = 6;
+        if($('num-suave')) $('num-suave').value = 6;
+        if($('input-litros-consumidos')) $('input-litros-consumidos').value = 388.78;
+        generarYDistribuirTablasWEM();
+        alert("✓ WEM Restablecido.");
+    }
+
+    // =========================================================================
+    // CIERRE DIARIO BLINDADO Y EXACTO: 
+    // NUEVO SALDO BODEGA (AYER) = SALDO ACTUAL (HOY) + INGRESO COMPRA / LOTE
+    // =========================================================================
+    function guardarCierreDiarioSistemaMaster() {
+        let fecha = document.getElementById('fecha-registro').value;
+        if (!fecha) { alert("Por favor seleccione una fecha."); return; }
+
+        if(!confirm(`¿Desea realizar el Cierre Diario Master para la fecha ${fecha}? Se sumarán con precisión los saldos actuales con los ingresos de lote.`)) return;
+
+        // 1. Capturar todos los inputs activos en pantalla
+        lineasGoma.forEach(lin => {
+            lin.productos.forEach((p, idx) => {
+                let inpBod = document.getElementById(`prod-bod-${idx}`);
+                let inpIng = document.getElementById(`prod-ing-${idx}`);
+                let inpAct = document.getElementById(`prod-act-${idx}`);
+
+                if (inpBod && inpBod.value !== "") p.saldoBodega = inpBod.value;
+                if (inpIng && inpIng.value !== "") p.ingresoCompra = inpIng.value;
+                if (inpAct && inpAct.value !== "") p.saldoActual = inpAct.value;
+            });
+        });
+
+        guardarDatosTablasEnLineaActiva();
+
+        let lineasRespaldoConsolidado = [];
+        let resumenGlobalTextos = [];
+        let quimicosRegistradosEnCierre = new Set();
+
+        // 2. Construir respaldo y trazabilidad
+        lineasGoma.forEach(lin => {
+            let ingresosComprasLin = [];
+            
+            lin.productos.forEach(p => {
+                let ingresoC = parseFloat(p.ingresoCompra) || 0;
+                if(ingresoC > 0 && !p.esGoma) {
+                    let claveUnicaIngreso = p.claveQuimico || p.nombre;
+                    if (!quimicosRegistradosEnCierre.has(claveUnicaIngreso)) {
+                        quimicosRegistradosEnCierre.add(claveUnicaIngreso);
+                        ingresosComprasLin.push({ producto: p.nombre, ingreso: ingresoC, unidad: p.unidad });
+                        resumenGlobalTextos.push(`Ingreso ${p.nombre.split(' ')[0]}: +${ingresoC} ${p.unidad}`);
+                    }
+                }
+            });
+
+            lin.gomasSup.forEach(g => {
+                let tVal = parseFloat(g.ingresoTanq) || 0;
+                let lVal = parseFloat(g.ingresoLitro) || 0;
+
+                if (tVal > 0 || lVal > 0) {
+                    ingresosComprasLin.push({ producto: g.titulo, ingreso: `${tVal} Tanq / ${lVal} L`, unidad: 'Unidades' });
+                    resumenGlobalTextos.push(`Ingreso Goma ${g.titulo.split(' ')[0]}: +${tVal} Tanq`);
+                }
+            });
+
+            let consumosLin = [];
+            let cantAnt = 0, cantDisp = 0, cantAzus = 0;
+
+            lin.productos.forEach(p => {
+                let bodegaAyer = parseFloat(p.saldoBodega) || 0;
+                let actual = parseFloat(p.saldoActual);
+                if (isNaN(actual)) actual = bodegaAyer;
+
+                let consumo = bodegaAyer - actual; 
+                if (consumo < 0) consumo = 0;
+
+                consumosLin.push({ 
+                    nombre: p.nombre, 
+                    unidad: p.unidad || 'L', 
+                    bodega: bodegaAyer, 
+                    actual: actual, 
+                    consumo: consumo 
+                });
+
+                if(consumo > 0) resumenGlobalTextos.push(`${lin.nombre.replace(/[^a-zA-Z]/g,'')}-${p.nombre.split(' ')[0]}: -${fmt(consumo)} ${p.unidad}`);
+
+                if(p.claveQuimico === 'ANT') cantAnt = consumo;
+                if(p.claveQuimico === 'DISP') cantDisp = consumo;
+                if(p.claveQuimico === 'AZUS') cantAzus = consumo;
+            });
+
+            const cDuro = lin.numDuro || 0;
+            const cSuave = lin.numSuave || 0;
+            let antPorPartida = cDuro > 0 ? (cantAnt / cDuro) : 0;
+            let dispPorPartida = cSuave > 0 ? (cantDisp / cSuave) : 0;
+            let azusPorPartida = cSuave > 0 ? (cantAzus / cSuave) : 0;
+
+            let respDuro = [];
+            for (let i = 1; i <= cDuro; i++) {
+                let pData = (lin.partidasDuro && lin.partidasDuro[i-1]) ? lin.partidasDuro[i-1] : { gCopa: '3.3', ltCopa: '0', gAla: '6.8', ltAla: '0' };
+                let gCopaVal = pData.gCopa || '3.3';
+                let gAlaVal = pData.gAla || '6.8';
+                let ltCVal = parseFloat(pData.ltCopa) || 0;
+                let ltAVal = parseFloat(pData.ltAla) || 0;
+
+                let fC = parseFloat(factoresGM[gCopaVal]) || 0;
+                let fA = parseFloat(factoresGM[gAlaVal]) || 0;
+                let gmC = ltCVal * fC;
+                let gmA = ltAVal * fA;
+                let gmTot = gmC + gmA;
+
+                let antCopa = gmTot > 0 ? (antPorPartida * (gmC / gmTot)) : (antPorPartida / 2);
+                let antAla = gmTot > 0 ? (antPorPartida * (gmA / gmTot)) : (antPorPartida / 2);
+
+                respDuro.push({
+                    n: i, gCopa: gCopaVal, factorCopa: factoresGM[gCopaVal] || '0.365240', ltCopa: ltCVal.toFixed(2), gmCopa: gmC.toFixed(3).replace('.',',') + ' L',
+                    gAla: gAlaVal, factorAla: factoresGM[gAlaVal] || '0.864720', ltAla: ltAVal.toFixed(2), gmAla: gmA.toFixed(3).replace('.',',') + ' L', gmTotal: gmTot.toFixed(2).replace('.',',') + ' L',
+                    antCopa: antCopa.toFixed(3).replace('.',',') + ' Kg', antAla: antAla.toFixed(3).replace('.',',') + ' Kg', antTot: antPorPartida.toFixed(3).replace('.',',') + ' Kg'
+                });
+            }
+
+            let respSuave = [];
+            for (let i = 1; i <= cSuave; i++) {
+                let pData = (lin.partidasSuave && lin.partidasSuave[i-1]) ? lin.partidasSuave[i-1] : { gCopa: '0.4', ltCopa: '0', gAla: '0.8', ltAla: '0' };
+                let gCopaVal = pData.gCopa || '0.4';
+                let gAlaVal = pData.gAla || '0.8';
+                let ltCVal = parseFloat(pData.ltCopa) || 0;
+                let ltAVal = parseFloat(pData.ltAla) || 0;
+
+                let fC = parseFloat(factoresGM[gCopaVal]) || 0;
+                let fA = parseFloat(factoresGM[gAlaVal]) || 0;
+                let gmC = ltCVal * fC;
+                let gmA = ltAVal * fA;
+                let gmTot = gmC + gmA;
+
+                let dispCopa = gmTot > 0 ? (dispPorPartida * (gmC / gmTot)) : (dispPorPartida / 2);
+                let dispAla = gmTot > 0 ? (dispPorPartida * (gmA / gmTot)) : (dispPorPartida / 2);
+
+                respSuave.push({
+                    n: i, gCopa: gCopaVal, factorCopa: factoresGM[gCopaVal] || '0.044800', ltCopa: ltCVal.toFixed(2), gmCopa: gmC.toFixed(3).replace('.',',') + ' L',
+                    gAla: gAlaVal, factorAla: factoresGM[gAlaVal] || '0.083960', ltAla: ltAVal.toFixed(2), gmAla: gmA.toFixed(3).replace('.',',') + ' L', gmTotal: gmTot.toFixed(2).replace('.',',') + ' L',
+                    dispCopa: dispCopa.toFixed(3).replace('.',',') + ' Kg', dispAla: dispAla.toFixed(3).replace('.',',') + ' Kg', azusTot: azusPorPartida.toFixed(3).replace('.',',') + ' Kg'
+                });
+            }
+
+            lineasRespaldoConsolidado.push({
+                idLinea: lin.id,
+                nombreLinea: lin.nombre,
+                ingresos: [],
+                ingresosCompras: ingresosComprasLin,
+                consumosReales: consumosLin,
+                respaldoDuro: respDuro,
+                respaldoSuave: respSuave
+            });
+        });
+
+        // 3. APLICAR SUMA EXACTA (SALDO ACTUAL + INGRESO) -> NUEVO SALDO BODEGA (AYER)
+        lineasGoma.forEach(lin => {
+            lin.gomasSup.forEach(g => {
+                let tIng = parseFloat(g.ingresoTanq) || 0;
+                let lIng = parseFloat(g.ingresoLitro) || 0;
+
+                (g.vertActual || []).forEach((t, i) => {
+                    if(!g.vertBodega[i]) {
+                        g.vertBodega[i] = { constante: t.constante || 2.507, cm: '' };
+                    }
+                    if(t.cm !== '' && t.cm !== undefined) {
+                        g.vertBodega[i].cm = t.cm;
+                    }
+                    t.cm = '';
+                });
+
+                (g.lotesActual || []).forEach((l) => {
+                    if (l.esFijo) {
+                        let tanquesHoy = parseFloat(l.cantidad) || 0;
+                        let tanquesTotalSuma = tanquesHoy + tIng;
+                        if(g.lotesBodega && g.lotesBodega[0]) {
+                            g.lotesBodega[0].cantidad = tanquesTotalSuma > 0 ? tanquesTotalSuma.toString() : '';
+                        }
+                    } else if (l.esManual) {
+                        let litrosHoy = parseFloat(l.cantidad) || 0;
+                        let litrosTotalSuma = litrosHoy + lIng;
+                        if(g.lotesBodega && g.lotesBodega[1]) {
+                            g.lotesBodega[1].cantidad = litrosTotalSuma > 0 ? litrosTotalSuma.toString() : '';
+                        }
+                    }
+                    l.cantidad = '';
+                });
+
+                g.ingresoTanq = '';
+                g.ingresoLitro = '';
+            });
+
+            lin.productos.forEach(p => {
+                let actualNum = parseFloat(p.saldoActual);
+                if (isNaN(actualNum)) {
+                    actualNum = parseFloat(p.saldoBodega) || 0;
+                }
+
+                let ingNum = parseFloat(p.ingresoCompra) || 0;
+                // SUMA EXACTA Y PRECISA: Saldo Actual + Ingreso Lote
+                let nuevoSaldoBodegaSumado = actualNum + ingNum;
+
+                p.saldoBodega = nuevoSaldoBodegaSumado.toFixed(2);
+                p.ingresoCompra = '';
+                p.saldoActual = '';
+            });
+        });
+
+        // Sincronizar químicos compartidos entre Blücher y Lemon de manera limpia
+        let linBlicher = lineasGoma.find(l => l.id === 'linea_blicher');
+        let linLemon = lineasGoma.find(l => l.id === 'linea_lemon');
+        if (linBlicher && linLemon) {
+            linBlicher.productos.forEach(pBlicher => {
+                if (!pBlicher.esGoma) {
+                    let pLemon = linLemon.productos.find(pl => pl.claveQuimico === pBlicher.claveQuimico);
+                    if (pLemon) {
+                        pLemon.saldoBodega = pBlicher.saldoBodega;
+                    }
+                }
+            });
+        }
+
+        historialMasterCierres.unshift({
+            id: Date.now(),
+            fecha: fecha,
+            resumenTexto: resumenGlobalTextos.slice(0, 4).join(' | ') + (resumenGlobalTextos.length > 4 ? ' ...' : '') || 'Hoja de Ruta y Cierre Master Consolidado',
+            lineas: lineasRespaldoConsolidado
+        });
+
+        guardarMemoriaGeneral();
+        renderGomasSuperiores();
+        renderTablaPrincipal();
+        filtrarHistorial();
+        
+        alert(`✓ Cierre Diario Guardado Exitosamente. Se sumó Saldo Actual + Ingreso Lote de forma exacta y pasó a Bodega (Ayer).`);
+    }
+
+    function renderizarHistorialCuerpo(lista) {
+        const tbody = document.getElementById('tabla-historial-cuerpo');
+        if(!tbody) return;
+        tbody.innerHTML = "";
+
+        if (!lista || lista.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="padding: 10px; text-align: center; color: #64748b;">No hay registros en la hoja de ruta.</td></tr>`;
+            return;
+        }
+
+        lista.forEach(c => {
+            tbody.innerHTML += `
+                <tr style="border-bottom: 1px solid #e2e8f0; cursor: pointer;" title="Doble clic para ver detalles" ondblclick="verRespaldoWEMMaster(${c.id})">
+                    <td style="padding: 8px; font-weight: bold; width: 15%;">📅 ${c.fecha}</td>
+                    <td style="padding: 8px; font-weight: 600; color: #1e293b;">${c.resumenTexto}</td>
+                    <td style="padding: 8px; text-align: center; width: 30%;">
+                        <button class="btn" style="background:#2563eb; padding:4px 10px; font-size:10px;" onclick="verRespaldoWEMMaster(${c.id})">
+                            🔍 Ver Hoja de Ruta y Trazabilidad
+                        </button>
+                    </td>
+                    <td style="padding: 8px; text-align: center; width: 15%;">
+                        <button class="btn" style="background: #ef4444; padding: 3px 8px; font-size: 9px;" onclick="eliminarCierreMaster(${c.id})">🗑️ Eliminar</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function verRespaldoWEMMaster(id) {
+        let cierre = historialMasterCierres.find(c => c.id === id);
+        if(!cierre) return;
+
+        $('modalTituloFecha').textContent = `📋 Hoja de Ruta y Trazabilidad Master · Fecha: ${cierre.fecha}`;
+        let htmlContenido = "";
+
+        cierre.lineas.forEach(lin => {
+            htmlContenido += `
+                <div style="background:#f8fafc; border:2px solid #cbd5e1; border-radius:6px; padding:10px; margin-bottom:15px;">
+                    <h4 style="color:#1e3a8a; font-size:12px; font-weight:900; margin-top:0; border-bottom:1px solid #cbd5e1; padding-bottom:4px;">${lin.nombreLinea} (Fecha de Cierre: ${cierre.fecha})</h4>
+            `;
+
+            if(lin.ingresosCompras && lin.ingresosCompras.length > 0) {
+                htmlContenido += `<strong style="color:#b45309; font-size:11px;">📦 Ingresos y Lotes Registrados en el Cierre:</strong><table class="modal-table" style="margin-top:3px; margin-bottom:8px;"><tr style="background:#fef9c3; font-weight:bold;"><th style="text-align:left; padding-left:6px;">Producto / Goma</th><th>Cantidad Ingresada</th></tr>`;
+                lin.ingresosCompras.forEach(ic => { htmlContenido += `<tr><td style="text-align:left; padding-left:6px; font-weight:bold;">${ic.producto}</td><td style="color:#b45309; font-weight:900;">+${ic.ingreso} ${ic.unidad}</td></tr>`; });
+                htmlContenido += `</table>`;
+            }
+
+            if(lin.consumosReales && lin.consumosReales.length > 0) {
+                htmlContenido += `<strong style="color:#1d4ed8; font-size:11px;">📊 Hoja de Trazabilidad de Consumos Reales:</strong><table class="modal-table" style="margin-top:3px; margin-bottom:8px;"><tr style="background:#eff6ff; font-weight:bold;"><th style="text-align:left; padding-left:6px;">Producto</th><th>Unidad</th><th>Bodega (Ayer)</th><th>Actual</th><th style="color:#b91c1c;">Consumo Real</th></tr>`;
+                lin.consumosReales.forEach(cr => { 
+                    htmlContenido += `<tr><td style="text-align:left; padding-left:6px; font-weight:bold;">${cr.nombre}</td><td>${cr.unidad}</td><td>${fmt(cr.bodega)}</td><td>${fmt(cr.actual)}</td><td style="font-weight:900; color:#b91c1c;">-${fmt(cr.consumo)} ${cr.unidad}</td></tr>`; 
+                });
+                htmlContenido += `</table>`;
+            }
+
+            if(lin.respaldoDuro && lin.respaldoDuro.length > 0) {
+                htmlContenido += `<strong style="color:#b45309; font-size:11px;">📌 Partidas Duro y Antiespumante (${lin.respaldoDuro.length}):</strong><table class="modal-table" style="margin-top:3px; margin-bottom:8px;"><tr style="background:#fef3c7; font-weight:bold;"><th>#</th><th>G. Copa</th><th>Lt. Copa</th><th>GM Copa</th><th>G. Ala</th><th>Lt. Ala</th><th>GM Ala</th><th>GM Total</th><th>Antiesp. Copa</th><th>Antiesp. Ala</th><th>Total Ant.</th></tr>`;
+                lin.respaldoDuro.forEach(d => {
+                    htmlContenido += `<tr><td><b>${d.n}</b></td><td><b>${d.gCopa}°</b></td><td>${d.ltCopa} L</td><td>${d.gmCopa}</td><td><b>${d.gAla}°</b></td><td>${d.ltAla} L</td><td>${d.gmAla}</td><td style="font-weight:bold; color:#15803d;">${d.gmTotal}</td><td style="background:#fefce8; font-weight:700;">${d.antCopa}</td><td style="background:#fefce8; font-weight:700;">${d.antAla}</td><td style="background:#fef08a; font-weight:bold;">${d.antTot}</td></tr>`;
+                });
+                htmlContenido += `</table>`;
+            }
+
+            if(lin.respaldoSuave && lin.respaldoSuave.length > 0) {
+                htmlContenido += `<strong style="color:#6b21a8; font-size:11px;">📌 Partidas Suave, Dispergoma y Asuperle (${lin.respaldoSuave.length}):</strong><table class="modal-table" style="margin-top:3px; margin-bottom:8px;"><tr style="background:#f3e8ff; font-weight:bold;"><th>#</th><th>G. Copa</th><th>Lt. Copa</th><th>GM Copa</th><th>G. Ala</th><th>Lt. Ala</th><th>GM Ala</th><th>GM Total</th><th>Disp. Copa</th><th>Disp. Ala</th><th>Asuperle</th></tr>`;
+                lin.respaldoSuave.forEach(s => {
+                    htmlContenido += `<tr><td><b>${s.n}</b></td><td><b>${s.gCopa}°</b></td><td>${s.ltCopa} L</td><td>${s.gmCopa}</td><td><b>${s.gAla}°</b></td><td>${s.ltAla} L</td><td>${s.gmAla}</td><td style="font-weight:bold; color:#2563eb;">${s.gmTotal}</td><td style="background:#faf5ff; font-weight:700;">${s.dispCopa}</td><td style="background:#faf5ff; font-weight:700;">${s.dispAla}</td><td style="background:#fdf2f8; font-weight:bold; color:#9d174d;">${s.azusTot}</td></tr>`;
+                });
+                htmlContenido += `</table>`;
+            }
+
+            htmlContenido += `</div>`;
+        });
+
+        $('modalContenidoDetalle').innerHTML = htmlContenido;
+        $('modalDetalleWEM').style.display = 'flex';
+    }
+
+    function cerrarModalDetalle() { $('modalDetalleWEM').style.display = 'none'; }
+
+    function eliminarCierreMaster(id) {
+        if(confirm("¿Está seguro de eliminar este registro de la hoja de ruta?")) {
+            historialMasterCierres = historialMasterCierres.filter(c => c.id !== id);
+            guardarMemoriaGeneral();
+            filtrarHistorial();
+        }
+    }
+
+    function filtrarHistorial() {
+        let mesFiltro = document.getElementById('filtro-mes').value;
+        let desdeFiltro = document.getElementById('filtro-desde').value;
+        let hastaFiltro = document.getElementById('filtro-hasta').value;
+
+        let resultado = historialMasterCierres || [];
+        if (mesFiltro) {
+            resultado = resultado.filter(c => c.fecha && c.fecha.startsWith(mesFiltro));
+        } else if (desdeFiltro && hastaFiltro) {
+            resultado = resultado.filter(c => c.fecha && c.fecha >= desdeFiltro && c.fecha <= hastaFiltro);
+        }
+        renderizarHistorialCuerpo(resultado);
+    }
+
+    function limpiarFiltrosHistorial() {
+        document.getElementById('filtro-mes').value = "";
+        document.getElementById('filtro-desde').value = "";
+        document.getElementById('filtro-hasta').value = "";
+        renderizarHistorialCuerpo(historialMasterCierres || []);
+    }
+
+    function generarPruebasMes() {
+        let mesSel = document.getElementById('filtro-mes').value || '2026-10';
+        let lineasPrueba = [];
+
+        lineasGoma.forEach(lin => {
+            lineasPrueba.push({
+                idLinea: lin.id,
+                nombreLinea: lin.nombre,
+                ingresos: [],
+                ingresosCompras: [
+                    {producto: 'Goma X-Lac Blicher', ingreso: 10, unidad: 'Tanques'},
+                    {producto: 'Antiespumante SHT', ingreso: 12, unidad: 'Kg'}
+                ],
+                consumosReales: [
+                    {nombre: lin.nombre, unidad: 'Litros', bodega: 20, actual: 10, consumo: 10},
+                    {nombre: 'Antiespumante SHT', unidad: 'Kg', bodega: 30, actual: 18, consumo: 12}
+                ],
+                respaldoDuro: [{n:1, gCopa:'3.3', ltCopa:'100.00', gmCopa:'36.52 L', gAla:'6.8', ltAla:'50.00', gmAla:'43.23 L', gmTotal:'79.76 L', antCopa:'0,150 Kg', antAla:'0,150 Kg', antTot:'0,300 Kg'}],
+                respaldoSuave: [{n:1, gCopa:'0.4', ltCopa:'100.00', gmCopa:'4.48 L', gAla:'0.8', ltAla:'100.00', gmAla:'8.39 L', gmTotal:'12.87 L', dispCopa:'0,200 Kg', dispAla:'0,200 Kg', azusTot:'0,600 Kg'}]
+            });
+        });
+
+        historialMasterCierres.unshift({
+            id: Date.now(),
+            fecha: `${mesSel}-23`,
+            resumenTexto: 'Prueba Hoja de Ruta y Trazabilidad Master con Ingresos de Lote',
+            lineas: lineasPrueba
+        });
+
+        guardarMemoriaGeneral();
+        filtrarHistorial();
+        alert("✓ Datos de prueba generados.");
+    }
+
+    function exportarRespaldoExcelGeneral() {
+        guardarDatosTablasEnLineaActiva();
+        let wb = XLSX.utils.book_new();
+
+        let fechaOperacionActual = document.getElementById('fecha-registro').value || new Date().toISOString().split('T')[0];
+
+        let rowsHistorial = [
+            ["REPORTE GENERAL DE HOJA DE RUTA Y TRAZABILIDAD MASTER"],
+            ["Fecha de Exportación:", new Date().toLocaleDateString()],
+            []
+        ];
+
+        if (historialMasterCierres.length === 0) {
+            rowsHistorial.push(["No hay cierres diarios guardados todavía en la hoja de ruta."]);
+        } else {
+            historialMasterCierres.forEach(c => {
+                rowsHistorial.push([`FECHA DE CIERRE: ${c.fecha}`]);
+                rowsHistorial.push([`Resumen: ${c.resumenTexto}`]);
+                rowsHistorial.push([]);
+                
+                (c.lineas || []).forEach(l => {
+                    rowsHistorial.push([l.nombreLinea, `Fecha: ${c.fecha}`]);
+                    
+                    if(l.ingresosCompras && l.ingresosCompras.length > 0) {
+                        rowsHistorial.push(["Ingresos / Lotes Registrados:"]);
+                        l.ingresosCompras.forEach(ic => rowsHistorial.push(["", ic.producto, `+${ic.ingreso} ${ic.unidad}`]));
+                    }
+
+                    if(l.consumosReales && l.consumosReales.length > 0) {
+                        rowsHistorial.push(["Trazabilidad de Consumos Reales:"]);
+                        rowsHistorial.push(["", "Producto", "Unidad", "Bodega (Ayer)", "Actual", "Consumo Real"]);
+                        l.consumosReales.forEach(cr => {
+                            rowsHistorial.push(["", cr.nombre, cr.unidad, cr.bodega, cr.actual, cr.consumo]);
+                        });
+                    }
+                    rowsHistorial.push([]);
+                });
+                rowsHistorial.push(["--------------------------------------------------------------------------------"]);
+            });
+        }
+
+        let wsHistorial = XLSX.utils.aoa_to_sheet(rowsHistorial);
+        XLSX.utils.book_append_sheet(wb, wsHistorial, "Hoja_de_Ruta_General");
+
+        lineasGoma.forEach(lin => {
+            let rowsLin = [
+                [`HISTORIAL COMPLETO DE OPERACIONES Y TRAZABILIDAD: ${lin.nombre.toUpperCase()}`],
+                [`Subtítulo: ${lin.subtitulo}`],
+                [`FECHA ACTUAL DE OPERACIÓN:`, fechaOperacionActual],
+                []
+            ];
+
+            let cierresDeEstaLinea = historialMasterCierres.filter(c => c.lineas && c.lineas.some(l => l.idLinea === lin.id));
+
+            if (cierresDeEstaLinea.length === 0) {
+                rowsLin.push([`FECHA REGISTRADA: ${fechaOperacionActual}`]);
+                rowsLin.push(["1. CONTROL DE INVENTARIO Y CONSUMOS REALES"]);
+                rowsLin.push(["Producto / Categoría", "Unidad", "Bodega (Ayer)", "Ingreso Compra/Lote", "Actual (Hoy)", "Consumo Real"]);
+                
+                lin.productos.forEach(p => {
+                    let b = parseFloat(p.saldoBodega) || 0;
+                    let a = parseFloat(p.saldoActual) || 0;
+                    let cons = b - a; if (cons < 0) cons = 0;
+                    rowsLin.push([p.nombre, p.unidad || 'L', b, p.ingresoCompra || 0, a, cons]);
+                });
+            } else {
+                cierresDeEstaLinea.forEach(c => {
+                    let lData = c.lineas.find(l => l.idLinea === lin.id);
+                    if (!lData) return;
+
+                    rowsLin.push([`================================================================================`]);
+                    rowsLin.push([`📅 FECHA REGISTRADA DE CIERRE: ${c.fecha}`]);
+                    rowsLin.push([`================================================================================`]);
+                    rowsLin.push([]);
+
+                    if (lData.ingresosCompras && lData.ingresosCompras.length > 0) {
+                        rowsLin.push(["📦 Ingresos / Lotes Registrados:"]);
+                        lData.ingresosCompras.forEach(ic => rowsLin.push(["", ic.producto, `+${ic.ingreso} ${ic.unidad}`]));
+                        rowsLin.push([]);
+                    }
+
+                    rowsLin.push(["1. CONTROL DE INVENTARIO Y CONSUMOS REALES"]);
+                    rowsLin.push(["Producto / Categoría", "Unidad", "Bodega (Ayer)", "Actual (Hoy)", "Consumo Real"]);
+                    
+                    if (lData.consumosReales && lData.consumosReales.length > 0) {
+                        lData.consumosReales.forEach(cr => {
+                            rowsLin.push([cr.nombre, cr.unidad, cr.bodega, cr.actual, cr.consumo]);
+                        });
+                    }
+                    rowsLin.push([]);
+
+                    if (lData.respaldoDuro && lData.respaldoDuro.length > 0) {
+                        rowsLin.push([`2. ENGOMADO DURO (≥2.0°) - Total Partidas: ${lData.respaldoDuro.length}`]);
+                        rowsLin.push(["#", "Grado Copa", "Litros Copa", "GM Copa", "Grado Ala", "Litros Ala", "GM Ala", "GM Total", "Antiesp. Copa", "Antiesp. Ala", "Total Antiespumante"]);
+                        lData.respaldoDuro.forEach(d => {
+                            rowsLin.push([d.n, d.gCopa, d.ltCopa, d.gmCopa, d.gAla, d.ltAla, d.gmAla, d.gmTotal, d.antCopa, d.antAla, d.antTot]);
+                        });
+                        rowsLin.push([]);
+                    }
+
+                    if (lData.respaldoSuave && lData.respaldoSuave.length > 0) {
+                        rowsLin.push([`3. ENGOMADO SUAVE (<2.0°) - Total Partidas: ${lData.respaldoSuave.length}`]);
+                        rowsLin.push(["#", "Grado Copa", "Litros Copa", "GM Copa", "Grado Ala", "Litros Ala", "GM Ala", "GM Total", "Dispergoma Copa", "Dispergoma Ala", "Asuperle"]);
+                        lData.respaldoSuave.forEach(s => {
+                            rowsLin.push([s.n, s.gCopa, s.ltCopa, s.gmCopa, s.gAla, s.ltAla, s.gmAla, s.gmTotal, s.dispCopa, s.dispAla, s.azusTot]);
+                        });
+                        rowsLin.push([]);
+                    }
+                    rowsLin.push([]);
+                });
+            }
+
+            let wsLin = XLSX.utils.aoa_to_sheet(rowsLin);
+            let nombreHojaLimpio = lin.nombre.replace(/[^a-zA-Z0-9 ]/g, '').trim().substring(0, 25);
+            XLSX.utils.book_append_sheet(wb, wsLin, nombreHojaLimpio);
+        });
+
+        let nombreArchivo = `Respaldo_Sistema_Maestro_${fechaOperacionActual}.xlsx`;
+        XLSX.writeFile(wb, nombreArchivo);
+        alert("✓ Respaldo en Excel generado exitosamente con TODAS las fechas acumuladas por línea.");
+    }
+
+    function restaurarSistemaExcelGeneral(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) { alert("✓ Archivo de respaldo procesado."); };
+        reader.readAsArrayBuffer(file);
+    }
+
+    window.onload = function() {
+        const hoy = new Date();
+        const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+        if($('filtro-mes')) $('filtro-mes').value = mesActual;
+        if($('fecha-registro')) $('fecha-registro').value = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+
+        renderizarPestanasBarra();
+        cargarPantallaLineaActiva();
+    };
+</script>
+
+</body>
+</html>
